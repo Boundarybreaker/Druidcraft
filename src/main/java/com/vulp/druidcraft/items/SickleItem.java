@@ -3,30 +3,28 @@ package com.vulp.druidcraft.items;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.vulp.druidcraft.util.SickleHarvestUtil;
+import net.fabricmc.fabric.impl.mining.level.ToolManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.Material;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.IItemTier;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.TieredItem;
 import net.minecraft.item.ToolItem;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ToolType;
 
 import java.util.Set;
 
 public class SickleItem extends ToolItem implements RadialToolItem, EffectiveSickleItem {
     private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet(Blocks.GRASS);
-    private static final Set<Material> EFFECTIVE_MATERIALS = ImmutableSet.of(Material.PLANTS, Material.OCEAN_PLANT, Material.TALL_PLANTS);
+    private static final Set<Material> EFFECTIVE_MATERIALS = ImmutableSet.of(Material.PLANT, Material.UNDERWATER_PLANT, Material.REPLACEABLE_PLANT);
 
     private final int radius;
 
     public SickleItem(ItemProperties builder) {
-        super((float) builder.getAttackDamage(), builder.getAttackSpeed(), builder.getTier(), EFFECTIVE_ON, builder.addToolType(ToolType.get("sickle"), builder.getTier().getHarvestLevel()));
+        super(builder.getTier(), builder);
         this.radius = builder.getRadius();
     }
 
@@ -36,20 +34,21 @@ public class SickleItem extends ToolItem implements RadialToolItem, EffectiveSic
     }
 
     @Override
-    public boolean canHarvestBlock(BlockState blockIn) {
-        if (blockIn.getHarvestTool() == ToolType.get("sickle")) {
+    public boolean isEffectiveOn(BlockState blockIn) {
+        if (ToolManager.handleIsEffectiveOn(new ItemStack(this), blockIn).get()) {
             return true;
         }
+        Block block = blockIn.getBlock();
         Material material = blockIn.getMaterial();
-        return EFFECTIVE_MATERIALS.contains(material);
+        return getEffectiveBlocks().contains(block) || EFFECTIVE_MATERIALS.contains(material);
     }
 
     @Override
-    public boolean onBlockDestroyed(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity entity) {
+    public boolean postMine(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity entity) {
         if (entity instanceof PlayerEntity) {
             SickleHarvestUtil.breakNeighbours(stack, world, pos, (PlayerEntity)entity);
         }
-        return super.onBlockDestroyed(stack, world, state, pos, entity);
+        return super.postMine(stack, world, state, pos, entity);
     }
 
     @Override

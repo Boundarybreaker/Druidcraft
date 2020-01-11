@@ -2,31 +2,32 @@ package com.vulp.druidcraft.registry;
 
 import com.vulp.druidcraft.Druidcraft;
 import com.vulp.druidcraft.recipes.WaterDependentRecipe;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.crafting.*;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 import java.util.function.Supplier;
 
 public enum RecipeRegistry {
-    WATER_CRAFTING(WaterDependentRecipe.Serializer::new, IRecipeType.CRAFTING),
-    ;
+    WATER_CRAFTING(WaterDependentRecipe.Serializer::new, RecipeType.CRAFTING),;
 
-    public static IRecipeSerializer<?> serializer;
-    public Supplier<IRecipeSerializer<?>> supplier;
-    public IRecipeType<? extends IRecipe<? extends IInventory>> type;
+    public RecipeSerializer<?> serializer;
+    public Supplier<RecipeSerializer<?>> supplier;
+    public RecipeType<? extends Recipe<? extends Inventory>> type;
 
-    private RecipeRegistry(Supplier<IRecipeSerializer<?>> supplier, IRecipeType<? extends IRecipe<? extends IInventory>> type) {
+    private RecipeRegistry(Supplier<RecipeSerializer<?>> supplier, RecipeType<? extends Recipe<? extends Inventory>> type) {
         this.supplier = supplier;
         this.type = type;
     }
 
-    public static void register(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+    public static void register() {
         for (RecipeRegistry recipe : RecipeRegistry.values()) {
             recipe.serializer = recipe.supplier.get();
-            ResourceLocation location = new ResourceLocation(Druidcraft.MODID, recipe.name().toLowerCase());
-            event.getRegistry().register(recipe.serializer.setRegistryName(location));
+            Identifier location = new Identifier(Druidcraft.MODID, recipe.name().toLowerCase());
+            Registry.register(Registry.RECIPE_SERIALIZER, location, recipe.serializer);
         }
     }
 }

@@ -5,6 +5,7 @@ import com.vulp.druidcraft.config.DropRateConfig;
 import com.vulp.druidcraft.events.LootHandler;
 import com.vulp.druidcraft.registry.*;
 import com.vulp.druidcraft.world.OreGeneration;
+import net.fabricmc.api.ModInitializer;
 import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,8 +20,7 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod("druidcraft")
-public class Druidcraft {
+public class Druidcraft implements ModInitializer {
     public static Druidcraft INSTANCE;
     public static final String MODID = "druidcraft";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
@@ -39,6 +39,12 @@ public class Druidcraft {
         Configuration.loadConfig(Configuration.client_config, FMLPaths.CONFIGDIR.get().resolve("druidcraft-client.toml").toString());
 
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @Override
+    public void onInitialize() {
+        OreGeneration.setupOreGeneration();
+        VanillaIntegrationRegistry.setup();
     }
 
     private void setup(final FMLCommonSetupEvent event) {

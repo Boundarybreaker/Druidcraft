@@ -1,11 +1,11 @@
 package com.vulp.druidcraft.registry;
 
-import net.minecraft.item.IItemTier;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.ToolMaterial;
+import net.minecraft.recipe.Ingredient;
 
-public enum ToolMaterialRegistry implements IItemTier
+public enum ToolMaterialRegistry implements ToolMaterial
 {
     bone(1.0f, 5.0f, 250, 1, 18, Items.BONE),
     moonstone(4.0f, 9.0f, 1921, 4, 15, ItemRegistry.moonstone);
@@ -25,12 +25,12 @@ public enum ToolMaterialRegistry implements IItemTier
     }
 
     @Override
-    public int getMaxUses() {
+    public int getDurability() {
         return this.durability;
     }
 
     @Override
-    public float getEfficiency() {
+    public float getMiningSpeed() {
         return this.efficiency;
     }
 
@@ -40,7 +40,7 @@ public enum ToolMaterialRegistry implements IItemTier
     }
 
     @Override
-    public int getHarvestLevel() {
+    public int getMiningLevel() {
         return this.harvestLevel;
     }
 
@@ -50,7 +50,7 @@ public enum ToolMaterialRegistry implements IItemTier
     }
 
     @Override
-    public Ingredient getRepairMaterial() {
-        return Ingredient.fromItems(this.repairMaterial);
+    public Ingredient getRepairIngredient() {
+        return Ingredient.ofItems(this.repairMaterial);
     }
 }

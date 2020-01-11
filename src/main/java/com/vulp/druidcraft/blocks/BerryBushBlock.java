@@ -1,5 +1,6 @@
 package com.vulp.druidcraft.blocks;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SweetBerryBushBlock;
 import net.minecraft.entity.Entity;
@@ -26,7 +27,7 @@ public class BerryBushBlock extends SweetBerryBushBlock {
     private final Supplier<Item> item;
     private final boolean thorns;
 
-    public BerryBushBlock(Supplier<Item> berryItem, boolean hasThorns, Properties properties) {
+    public BerryBushBlock(Supplier<Item> berryItem, boolean hasThorns, Block.Settings properties) {
         super(properties);
         this.item = berryItem;
         this.thorns = hasThorns;

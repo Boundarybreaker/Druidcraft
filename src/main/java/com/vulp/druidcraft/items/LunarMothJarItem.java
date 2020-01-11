@@ -11,18 +11,22 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.*;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.state.IProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.util.ActionResultType;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.DefaultedList;
 import net.minecraft.util.Direction;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.Map;
@@ -32,18 +36,18 @@ public class LunarMothJarItem extends BlockItem {
     private static Map<LunarMothColors, LunarMothJarItem> map = Maps.newEnumMap(LunarMothColors.class);
     private final LunarMothColors color;
 
-    public LunarMothJarItem(Block block, LunarMothColors color, Properties properties) {
+    public LunarMothJarItem(Block block, LunarMothColors color, Item.Settings properties) {
         super(block, properties);
         map.put(color, this);
         this.color = color;
     }
 
     @Override
-    public void fillItemGroup(ItemGroup group, NonNullList<ItemStack> items) {
-        if (this.isInGroup(group)) {
+    public void fillItemGroup(ItemGroup group, DefaultedList<ItemStack> items) {
+        if (this.isIn(group)) {
             ItemStack stack = new ItemStack(this);
-            CompoundNBT tag = stack.getOrCreateTag();
-            CompoundNBT entityData = new CompoundNBT();
+            CompoundTag tag = stack.getOrCreateTag();
+            CompoundTag entityData = new CompoundTag();
             entityData.putInt("Color", LunarMothColors.colorToInt(color));
             tag.put("EntityData", entityData);
             items.add(stack);
@@ -51,24 +55,24 @@ public class LunarMothJarItem extends BlockItem {
     }
 
     @Override
-    public ActionResultType onItemUse(ItemUseContext context) {
+    public ActionResult useOnBlock(ItemUsageContext context) {
         if (context.getPlayer().isSneaking()) {
-            ActionResultType actionresulttype1 = this.tryPlace(new BlockItemUseContext(context));
-            return actionresulttype1 != ActionResultType.SUCCESS ? this.onItemRightClick(context.getWorld(), context.getPlayer(), context.getHand()).getType() : actionresulttype1;
+            ActionResult actionresulttype1 = this.place(new ItemPlacementContext(context));
+            return actionresulttype1 != ActionResult.SUCCESS ? this.use(context.getWorld(), context.getPlayer(), context.getHand()).getResult(): actionresulttype1;
         } else {
-            ActionResultType actionresulttype2 = this.tryRelease(new BlockItemUseContext(context));
-            return actionresulttype2 != ActionResultType.SUCCESS ? this.onItemRightClick(context.getWorld(), context.getPlayer(), context.getHand()).getType() : actionresulttype2;
+            ActionResult actionresulttype2 = this.tryRelease(new ItemPlacementContext(context));
+            return actionresulttype2 != ActionResult.SUCCESS ? this.use(context.getWorld(), context.getPlayer(), context.getHand()).getResult() : actionresulttype2;
         }
     }
 
-    public ActionResultType tryRelease(ItemUseContext context) {
+    public ActionResult tryRelease(ItemUsageContext context) {
         World world = context.getWorld();
-        if (world.isRemote) {
-            return ActionResultType.SUCCESS;
+        if (world.isClient) {
+            return ActionResult.SUCCESS;
         } else {
-            ItemStack itemstack = context.getItem();
-            BlockPos blockpos = context.getPos();
-            Direction direction = context.getFace();
+            ItemStack itemstack = context.getStack();
+            BlockPos blockpos = context.getBlockPos();
+            Direction direction = context.getPlayerFacing();
             BlockState blockstate = world.getBlockState(blockpos);
             BlockPos blockpos1;
 
@@ -80,18 +84,18 @@ public class LunarMothJarItem extends BlockItem {
 
             PlayerEntity player = context.getPlayer();
 
-            LunarMothEntity moth = (LunarMothEntity) EntityRegistry.lunar_moth_entity.spawn(world, itemstack, player, blockpos1, SpawnReason.SPAWN_EGG, true, !Objects.equals(blockpos, blockpos1) && direction == Direction.UP);
+            LunarMothEntity moth = (LunarMothEntity) EntityRegistry.lunar_moth_entity.spawnFromItemStack(world, itemstack, player, blockpos1, SpawnType.SPAWN_EGG, true, !Objects.equals(blockpos, blockpos1) && direction == Direction.UP);
             if (moth != null) {
                 if (itemstack.getTag() != null) {
-                    CompoundNBT tag = itemstack.getTag();
+                    CompoundTag tag = itemstack.getTag();
                     if (tag.contains("EntityData")) {
                         moth.readAdditional(tag.getCompound("EntityData"));
                     }
                 }
-                itemstack.shrink(1);
+                itemstack.decrement(1);
                 ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
                 if (player != null) {
-                    if (!player.inventory.addItemStackToInventory(bottle)) {
+                    if (!player.inventory.insertStack(bottle)) {
                         player.dropItem(bottle, false);
                     }
                 } else {
@@ -99,7 +103,7 @@ public class LunarMothJarItem extends BlockItem {
                 }
             }
 
-            return ActionResultType.SUCCESS;
+            return ActionResult.SUCCESS;
         }
     }
 

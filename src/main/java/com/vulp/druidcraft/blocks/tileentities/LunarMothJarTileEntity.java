@@ -1,12 +1,14 @@
 package com.vulp.druidcraft.blocks.tileentities;
 
 import com.vulp.druidcraft.registry.TileEntityRegistry;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Tickable;
 import net.minecraft.util.math.MathHelper;
 
-public class LunarMothJarTileEntity extends TileEntity implements ITickableTileEntity {
+public class LunarMothJarTileEntity extends BlockEntity implements Tickable {
     public int ageInTicks;
     public int color;
     public float positionX;

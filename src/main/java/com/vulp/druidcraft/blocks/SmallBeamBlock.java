@@ -2,6 +2,7 @@ package com.vulp.druidcraft.blocks;
 
 import com.vulp.druidcraft.api.IKnifeable;
 import net.minecraft.block.*;
+import net.minecraft.entity.EntityContext;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.IFluidState;
@@ -10,13 +11,20 @@ import net.minecraft.item.ItemUseContext;
 import net.minecraft.pathfinding.PathType;
 import net.minecraft.state.*;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.EnumProperty;
+import net.minecraft.state.property.IntProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -25,14 +33,14 @@ import javax.annotation.Nullable;
 
 public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiquidContainer {
 
-    public static final BooleanProperty X_AXIS = BooleanProperty.create("x_axis");
-    public static final BooleanProperty Y_AXIS = BooleanProperty.create("y_axis");
-    public static final BooleanProperty Z_AXIS = BooleanProperty.create("z_axis");
-    public static final IntegerProperty CONNECTIONS = IntegerProperty.create("connections", 0, 3);
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    public static final EnumProperty<Direction.Axis> DEFAULT_AXIS = BlockStateProperties.AXIS;
+    public static final BooleanProperty X_AXIS = BooleanProperty.of("x_axis");
+    public static final BooleanProperty Y_AXIS = BooleanProperty.of("y_axis");
+    public static final BooleanProperty Z_AXIS = BooleanProperty.of("z_axis");
+    public static final IntProperty CONNECTIONS = IntProperty.of("connections", 0, 3);
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
+    public static final EnumProperty<Direction.Axis> DEFAULT_AXIS = Properties.AXIS;
 
-    public SmallBeamBlock(Properties properties) {
+    public SmallBeamBlock(Block.Settings properties) {
         super(properties);
         this.setDefaultState(this.getDefaultState()
                 .with(X_AXIS, false)
@@ -43,17 +51,17 @@ public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiqu
                 .with(DEFAULT_AXIS, Direction.Axis.Y));
     }
 
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, IWorld worldIn, BlockPos pos, EntityContext context) {
         VoxelShape voxelshape = VoxelShapes.empty();
 
         if (state.get(X_AXIS)) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(0.0D, 5.0D, 5.0D, 16.0D, 11.0D, 11.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(0.0D, 5.0D, 5.0D, 16.0D, 11.0D, 11.0D));
         }
         if (state.get(Y_AXIS)) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(5.0D, 0.0D, 5.0D, 11.0D, 16.0D, 11.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(5.0D, 0.0D, 5.0D, 11.0D, 16.0D, 11.0D));
         }
         if (state.get(Z_AXIS)) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 16.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 16.0D));
         }
         if (!state.get(X_AXIS) && !state.get(Y_AXIS) && !state.get(Z_AXIS)) {
             voxelshape = VoxelShapes.fullCube();
@@ -63,7 +71,7 @@ public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiqu
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(X_AXIS, Y_AXIS, Z_AXIS, CONNECTIONS, WATERLOGGED, DEFAULT_AXIS);
     }
 

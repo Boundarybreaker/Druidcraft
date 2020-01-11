@@ -45,7 +45,7 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
 
     public static final EnumProperty<CropLifeStageType> LIFE_STAGE = EnumProperty.create("life_stage", CropLifeStageType.class);
 
-    public ElderFruitBlock(Properties properties) {
+    public ElderFruitBlock(Block.Settings properties) {
         super(properties);
         this.setDefaultState(this.stateContainer.getBaseState().with(this.getAgeProperty(), 0).with(LIFE_STAGE, CropLifeStageType.FLOWER).with(MID_BERRY, false).with(FACING, Direction.NORTH));
     }

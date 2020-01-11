@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "druidcraft",
+  "version": "${version}",
+
+  "name": "Druidcraft",
+  "authors": [
+    "VulpTheHorseDog",
+    "B0undarybreaker"
+  ],
+  "icon": "assets/druidcraft/icon.png",
+  "description": "A druid-focused splice-of-life mod that's currently in very early alpha, if you'd even consider it at that point yet.\n\nRegardless, I hope you enjoy the features as they're rolled out! :)",
+  "license": "MIT",
+  "contact": {
+    "sources": "https://github.com/MysticMods/Druidcraft"
+  },
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.vulp.druidcraft.Druidcraft"
+    ],
+    "client": [
+      "com.vulp.druidcraft.DruidcraftClient"
+    ]
+  },
+  "mixins": [
+    "mixins.druidcraft.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.4.0",
+    "fabric": "*"
+  }
+}

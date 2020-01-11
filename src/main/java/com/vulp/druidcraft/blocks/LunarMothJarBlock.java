@@ -23,7 +23,7 @@ public class LunarMothJarBlock extends RopeableLanternBlock {
 
     public static IntegerProperty COLOR = IntegerProperty.create("color", 1, 6);
 
-    public LunarMothJarBlock(Block.Properties properties, int mothColor) {
+    public LunarMothJarBlock(Block.Settings properties, int mothColor) {
         super(properties);
         this.setDefaultState(this.stateContainer.getBaseState().with(HANGING, false).with(ROPED, false).with(WATERLOGGED, false).with(COLOR, mothColor));
     }

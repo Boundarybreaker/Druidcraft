@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.IWaterLoggable;
+import net.minecraft.block.Waterloggable;
 import net.minecraft.block.material.PushReaction;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.IFluidState;
@@ -24,11 +25,11 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 
-public class RopeLanternBlock extends Block implements IWaterLoggable {
+public class RopeLanternBlock extends Block implements Waterloggable {
 
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    public RopeLanternBlock(Properties properties) {
+    public RopeLanternBlock(Block.Settings properties) {
         super(properties);
         this.setDefaultState(this.stateContainer.getBaseState().with(WATERLOGGED, false));
     }

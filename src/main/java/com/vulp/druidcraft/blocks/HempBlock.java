@@ -26,7 +26,7 @@ import java.util.Random;
 public class HempBlock extends CropBlock {
     private static final IntegerProperty HEMP_AGE;
 
-    public HempBlock(Properties properties) {
+    public HempBlock(Block.Settings properties) {
         super(properties);
     }
 

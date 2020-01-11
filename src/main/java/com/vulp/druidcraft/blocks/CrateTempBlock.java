@@ -4,7 +4,9 @@ import com.vulp.druidcraft.blocks.tileentities.CrateTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.ContainerBlock;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
@@ -25,10 +27,10 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class CrateTempBlock extends ContainerBlock {
+public class CrateTempBlock extends BlockWithEntity {
     public static final BooleanProperty PROPERTY_OPEN;
 
-    public CrateTempBlock(Properties properties) {
+    public CrateTempBlock(Block.Settings properties) {
         super(properties);
         this.setDefaultState(this.stateContainer.getBaseState().with(PROPERTY_OPEN, false));
     }
@@ -68,7 +70,7 @@ public class CrateTempBlock extends ContainerBlock {
     }
 
     @Nullable
-    public TileEntity createNewTileEntity(IBlockReader worldIn) {
+    public BlockEntity createBlockEntity(IBlockReader worldIn) {
         return new CrateTileEntity();
     }
 

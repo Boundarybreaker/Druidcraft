@@ -4,6 +4,7 @@ import com.vulp.druidcraft.registry.ParticleRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.*;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -20,7 +21,7 @@ public class SoulfireBlock extends Block {
     private final DyeColor color;
     private static final Map<DyeColor, int[]> DYE_COLOR_MAP = new HashMap<>();
 
-    public SoulfireBlock(DyeColor color, Properties properties) {
+    public SoulfireBlock(DyeColor color, Block.Settings properties) {
         super(properties);
         this.color = color;
     }

@@ -1,9 +1,9 @@
 package com.vulp.druidcraft.api;
 
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.util.ActionResultType;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.util.ActionResult;
 
 @FunctionalInterface
 public interface IKnifeable {
-    ActionResultType onKnife(ItemUseContext context);
+    ActionResult onKnife(ItemUsageContext context);
 }

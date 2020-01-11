@@ -6,6 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MutableBoundingBox;
 import net.minecraft.world.gen.IWorldGenerationReader;
+import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.gen.feature.TallTaigaTreeFeature;
 import net.minecraftforge.common.IPlantable;
@@ -14,17 +15,17 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
-public class DarkwoodTreeFeature extends TallTaigaTreeFeature {
+public class DarkwoodTreeFeature extends BranchedTreeFeature<BranchedTreeFeatureConfig> {
     private static final BlockState TRUNK;
     private static final BlockState LEAF;
 
-    public DarkwoodTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> p_i51429_1_, boolean p_i51429_2_) {
-        super(p_i51429_1_, p_i51429_2_);
+    public DarkwoodTreeFeature(Function<Dynamic<?>, BranchedTreeFeatureConfig> config, boolean p_i51429_2_) {
+        super(config);
         this.setSapling((IPlantable) BlockRegistry.darkwood_sapling);
     }
 
     @Override
-	public boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox p_208519_5_) {
+	public boolean generate(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox p_208519_5_) {
         int i = rand.nextInt(4) + 6;
         int j = 1 + rand.nextInt(2);
         int k = i - j;

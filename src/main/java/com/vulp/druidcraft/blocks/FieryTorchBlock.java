@@ -31,9 +31,9 @@ public class FieryTorchBlock extends TorchBlock implements IWaterLoggable {
 
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    public FieryTorchBlock(Properties properties) {
+    public FieryTorchBlock(Block.Settings properties) {
         super(properties);
-        this.setDefaultState(this.stateContainer.getBaseState().with(WATERLOGGED, false));
+        this.setDefaultState(this.getStateManager().getDefaultState().with(WATERLOGGED, false));
     }
 
     @Override

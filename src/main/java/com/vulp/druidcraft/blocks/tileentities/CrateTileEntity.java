@@ -5,6 +5,9 @@ import com.vulp.druidcraft.registry.BlockRegistry;
 import com.vulp.druidcraft.registry.SoundEventRegistry;
 import com.vulp.druidcraft.registry.TileEntityRegistry;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.container.Container;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.ItemStackHelper;
@@ -12,21 +15,24 @@ import net.minecraft.inventory.container.ChestContainer;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.tileentity.ChestTileEntity;
 import net.minecraft.tileentity.LockableLootTileEntity;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.DefaultedList;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 
-public class CrateTileEntity extends LockableLootTileEntity {
-    private NonNullList<ItemStack> field_213966_a = NonNullList.withSize(27, ItemStack.EMPTY);
+public class CrateTileEntity extends LockableContainerBlockEntity {
+    private DefaultedList<ItemStack> stacks = DefaultedList.ofSize(27, ItemStack.EMPTY);
     private int field_213967_b;
 
-    private CrateTileEntity(TileEntityType<?> p_i49963_1_) {
-        super(p_i49963_1_);
+    private CrateTileEntity(BlockEntityType<?> type) {
+        super(type);
     }
 
     public CrateTileEntity() {
@@ -36,7 +42,7 @@ public class CrateTileEntity extends LockableLootTileEntity {
     public CompoundNBT write(CompoundNBT compound) {
         super.write(compound);
         if (!this.checkLootAndWrite(compound)) {
-            ItemStackHelper.saveAllItems(compound, this.field_213966_a);
+            ItemStackHelper.saveAllItems(compound, this.stacks);
         }
 
         return compound;
@@ -46,7 +52,7 @@ public class CrateTileEntity extends LockableLootTileEntity {
         super.read(compound);
         this.field_213966_a = NonNullList.withSize(this.getSizeInventory(), ItemStack.EMPTY);
         if (!this.checkLootAndRead(compound)) {
-            ItemStackHelper.loadAllItems(compound, this.field_213966_a);
+            ItemStackHelper.loadAllItems(compound, this.stacks);
         }
 
     }
@@ -54,12 +60,12 @@ public class CrateTileEntity extends LockableLootTileEntity {
     /**
      * Returns the number of slots in the inventory.
      */
-    public int getSizeInventory() {
+    public int getInvSize() {
         return 27;
     }
 
-    public boolean isEmpty() {
-        for(ItemStack itemstack : this.field_213966_a) {
+    public boolean isInvEmpty() {
+        for(ItemStack itemstack : this.stacks) {
             if (!itemstack.isEmpty()) {
                 return false;
             }
@@ -72,7 +78,7 @@ public class CrateTileEntity extends LockableLootTileEntity {
      * Returns the stack in the given slot.
      */
     public ItemStack getStackInSlot(int index) {
-        return this.field_213966_a.get(index);
+        return this.stacks.get(index);
     }
 
     /**
@@ -93,7 +99,7 @@ public class CrateTileEntity extends LockableLootTileEntity {
      * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
      */
     public void setInventorySlotContents(int index, ItemStack stack) {
-        this.field_213966_a.set(index, stack);
+        this.stacks.set(index, stack);
         if (stack.getCount() > this.getInventoryStackLimit()) {
             stack.setCount(this.getInventoryStackLimit());
         }
@@ -104,7 +110,7 @@ public class CrateTileEntity extends LockableLootTileEntity {
         this.field_213966_a.clear();
     }
 
-    protected NonNullList<ItemStack> getItems() {
+    protected DefaultedList<ItemStack> getItems() {
         return this.field_213966_a;
     }
 
@@ -112,11 +118,11 @@ public class CrateTileEntity extends LockableLootTileEntity {
         this.field_213966_a = itemsIn;
     }
 
-    protected ITextComponent getDefaultName() {
-        return new TranslationTextComponent("container.druidcraft.crate");
+    protected Text getContainerName() {
+        return new TranslatableText("container.druidcraft.crate");
     }
 
-    protected Container createMenu(int id, PlayerInventory player) {
+    protected Container createContainer(int id, PlayerInventory player) {
         return ChestContainer.createGeneric9X3(id, player, this);
     }
 

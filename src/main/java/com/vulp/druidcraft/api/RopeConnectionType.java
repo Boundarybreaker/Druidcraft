@@ -1,10 +1,10 @@
 package com.vulp.druidcraft.api;
 
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.StringIdentifiable;
 
 import java.util.Locale;
 
-public enum RopeConnectionType implements IStringSerializable {
+public enum RopeConnectionType implements StringIdentifiable {
     NONE,
     REGULAR,
     TIED_FENCE,
@@ -12,7 +12,7 @@ public enum RopeConnectionType implements IStringSerializable {
     TIED_BEAM_2;
 
     @Override
-    public String getName() {
+    public String asString() {
         return name().toLowerCase(Locale.ROOT);
     }
 }

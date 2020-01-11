@@ -30,7 +30,7 @@ public class RopeableLanternBlock extends Block implements IWaterLoggable {
     public static final BooleanProperty ROPED = BooleanProperty.create("roped");
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
-    public RopeableLanternBlock(Block.Properties p_i49980_1_) {
+    public RopeableLanternBlock(Block.Settings p_i49980_1_) {
         super(p_i49980_1_);
         this.setDefaultState(this.stateContainer.getBaseState().with(HANGING, false).with(ROPED, false).with(WATERLOGGED, false));
     }

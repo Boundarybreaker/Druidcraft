@@ -17,16 +17,22 @@ import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.EnumProperty;
 import net.minecraft.state.IProperty;
 import net.minecraft.state.StateContainer;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.EnumProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
@@ -36,16 +42,16 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 @SuppressWarnings("deprecation")
-public class RopeBlock extends SixWayBlock implements IBucketPickupHandler, ILiquidContainer, IKnifeable {
+public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandler, ILiquidContainer, IKnifeable {
     private static final Direction[] FACING_VALUES = Direction.values();
-    public static final EnumProperty<RopeConnectionType> NORTH = EnumProperty.create("north", RopeConnectionType.class);
-    public static final EnumProperty<RopeConnectionType> EAST = EnumProperty.create("east", RopeConnectionType.class);
-    public static final EnumProperty<RopeConnectionType> SOUTH = EnumProperty.create("south", RopeConnectionType.class);
-    public static final EnumProperty<RopeConnectionType> WEST = EnumProperty.create("west", RopeConnectionType.class);
-    public static final EnumProperty<RopeConnectionType> UP = EnumProperty.create("up", RopeConnectionType.class);
-    public static final EnumProperty<RopeConnectionType> DOWN = EnumProperty.create("down", RopeConnectionType.class);
-    public static final BooleanProperty KNOTTED = BooleanProperty.create("knotted");
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final EnumProperty<RopeConnectionType> NORTH = EnumProperty.of("north", RopeConnectionType.class);
+    public static final EnumProperty<RopeConnectionType> EAST = EnumProperty.of("east", RopeConnectionType.class);
+    public static final EnumProperty<RopeConnectionType> SOUTH = EnumProperty.of("south", RopeConnectionType.class);
+    public static final EnumProperty<RopeConnectionType> WEST = EnumProperty.of("west", RopeConnectionType.class);
+    public static final EnumProperty<RopeConnectionType> UP = EnumProperty.of("up", RopeConnectionType.class);
+    public static final EnumProperty<RopeConnectionType> DOWN = EnumProperty.of("down", RopeConnectionType.class);
+    public static final BooleanProperty KNOTTED = BooleanProperty.of("knotted");
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
     protected final VoxelShape[] collisionShapes;
     public static final Map<Direction, EnumProperty<RopeConnectionType>> FACING_TO_PROPERTY_MAP = Util.make(Maps.newEnumMap(Direction.class), (map) -> {
         map.put(Direction.NORTH, NORTH);
@@ -56,7 +62,7 @@ public class RopeBlock extends SixWayBlock implements IBucketPickupHandler, ILiq
         map.put(Direction.DOWN, DOWN);
     });
 
-    public RopeBlock(Properties properties) {
+    public RopeBlock(Block.Settings properties) {
         super(0.12F, properties);
         this.collisionShapes = this.makeCollisionShapes(0.125F);
         this.setDefaultState(this.getDefaultState()
@@ -165,7 +171,7 @@ public class RopeBlock extends SixWayBlock implements IBucketPickupHandler, ILiq
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN, KNOTTED, WATERLOGGED);
     }
 

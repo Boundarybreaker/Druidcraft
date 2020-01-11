@@ -20,7 +20,7 @@ public class ElderLeavesBlock extends LeavesBlock {
 
     public static final IntegerProperty GROWTH_TRIES = IntegerProperty.create("growth_tries", 0, 2);
 
-    public ElderLeavesBlock(Properties properties) {
+    public ElderLeavesBlock(Block.Settings properties) {
         super(properties);
         this.setDefaultState(this.getDefaultState().with(GROWTH_TRIES, 0));
     }

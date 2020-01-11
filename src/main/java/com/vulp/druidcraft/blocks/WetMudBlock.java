@@ -36,7 +36,7 @@ public class WetMudBlock extends Block {
     private Block block;
     private int maxTicks = 0;
 
-    public WetMudBlock(Block convertedBlock, Properties properties) {
+    public WetMudBlock(Block convertedBlock, Block.Settings properties) {
         super(properties);
         this.block = convertedBlock;
     }

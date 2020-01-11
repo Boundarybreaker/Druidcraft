@@ -3,10 +3,9 @@ package com.vulp.druidcraft.blocks;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
 
 public class BeaconBaseBlock extends Block {
-    public BeaconBaseBlock(Properties properties) {
+    public BeaconBaseBlock(Block.Settings properties) {
         super(properties);
     }
 

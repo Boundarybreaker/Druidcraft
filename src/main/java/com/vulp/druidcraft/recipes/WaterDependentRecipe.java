@@ -6,29 +6,28 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.vulp.druidcraft.Druidcraft;
+import com.vulp.druidcraft.mixin.MixinCraftingInventory;
+import com.vulp.druidcraft.mixin.MixinCraftingResultSlot;
+import com.vulp.druidcraft.mixin.MixinPlayerContainer;
 import com.vulp.druidcraft.registry.RecipeRegistry;
+import net.minecraft.container.Container;
+import net.minecraft.container.CraftingTableContainer;
+import net.minecraft.container.PlayerContainer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.CraftingResultSlot;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.inventory.container.WorkbenchContainer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapedRecipe;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.ShapedRecipe;
+import net.minecraft.util.DefaultedList;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.PacketByteBuf;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,12 +37,12 @@ public class WaterDependentRecipe extends ShapedRecipe {
 
     private final int recipeWidth;
     private final int recipeHeight;
-    private final NonNullList<Ingredient> recipeItems;
+    private final DefaultedList<Ingredient> recipeItems;
     private final ItemStack recipeOutput;
-    private final ResourceLocation id;
+    private final Identifier id;
     private final String group;
 
-    public WaterDependentRecipe(ResourceLocation idIn, String groupIn, int recipeWidthIn, int recipeHeightIn, NonNullList<Ingredient> recipeItemsIn, ItemStack recipeOutputIn) {
+    public WaterDependentRecipe(Identifier idIn, String groupIn, int recipeWidthIn, int recipeHeightIn, DefaultedList<Ingredient> recipeItemsIn, ItemStack recipeOutputIn) {
         super(idIn, groupIn, recipeWidthIn, recipeHeightIn, recipeItemsIn, recipeOutputIn);
         this.id = idIn;
         this.group = groupIn;
@@ -53,18 +52,14 @@ public class WaterDependentRecipe extends ShapedRecipe {
         this.recipeOutput = recipeOutputIn;
     }
 
-    private static final Field eventHandlerField = ObfuscationReflectionHelper.findField(CraftingInventory.class, "field_70465_c");
-    private static final Field containerPlayerPlayerField = ObfuscationReflectionHelper.findField(PlayerContainer.class, "field_82862_h");
-    private static final Field slotCraftingPlayerField = ObfuscationReflectionHelper.findField(CraftingResultSlot.class, "field_75238_b");
-
     @Nullable
     private static PlayerEntity findPlayer(CraftingInventory inventory) {
         try {
-            Container container = (Container) eventHandlerField.get(inventory);
+            Container container = ((MixinCraftingInventory)inventory).getContainer();
             if (container instanceof PlayerContainer) {
-                return (PlayerEntity) containerPlayerPlayerField.get(container);
-            } else if (container instanceof WorkbenchContainer) {
-                return (PlayerEntity) slotCraftingPlayerField.get(container.getSlot(0));
+                return ((MixinPlayerContainer)container).getOwner();
+            } else if (container instanceof CraftingTableContainer) {
+                return ((MixinCraftingResultSlot)container.getSlot(0)).getPlayer();
             } else {
                 return null;
             }
@@ -74,12 +69,12 @@ public class WaterDependentRecipe extends ShapedRecipe {
     }
 
     @Override
-    public ResourceLocation getId() {
+    public Identifier getId() {
         return this.id;
     }
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return RecipeRegistry.WATER_CRAFTING.serializer;
     }
 
@@ -89,18 +84,18 @@ public class WaterDependentRecipe extends ShapedRecipe {
     }
 
     @Override
-    public ItemStack getRecipeOutput() {
+    public ItemStack getOutput() {
         return this.recipeOutput;
     }
 
     @Override
-    public NonNullList<Ingredient> getIngredients() {
+    public DefaultedList<Ingredient> getPreviewInputs() {
         return this.recipeItems;
     }
 
 
     @Override
-    public boolean canFit(int width, int height) {
+    public boolean fits(int width, int height) {
         return width >= this.recipeWidth && height >= this.recipeHeight;
     }
 
@@ -135,14 +130,14 @@ public class WaterDependentRecipe extends ShapedRecipe {
                     }
                 }
 
-                if (!ingredient.test(craftingInventory.getStackInSlot(i + j * craftingInventory.getWidth()))) {
+                if (!ingredient.test(craftingInventory.getInvStack(i + j * craftingInventory.getWidth()))) {
                     return false;
                 }
             }
         }
 
         PlayerEntity player = findPlayer(craftingInventory);
-        if (player != null && player.isWet()) {
+        if (player != null && player.isInsideWaterOrRain()) {
             return true;
         }
         return false;
@@ -154,22 +149,12 @@ public class WaterDependentRecipe extends ShapedRecipe {
     }
 
     @Override
-    public int getRecipeWidth() {
-        return getWidth();
-    }
-
-    @Override
     public int getHeight() {
         return this.recipeHeight;
     }
 
-    @Override
-    public int getRecipeHeight() {
-        return getHeight();
-    }
-
-    private static NonNullList<Ingredient> deserializeIngredients(String[] pattern, Map<String, Ingredient> keys, int patternWidth, int patternHeight) {
-        NonNullList<Ingredient> nonnulllist = NonNullList.withSize(patternWidth * patternHeight, Ingredient.EMPTY);
+    private static DefaultedList<Ingredient> deserializeIngredients(String[] pattern, Map<String, Ingredient> keys, int patternWidth, int patternHeight) {
+        DefaultedList<Ingredient> nonnulllist = DefaultedList.ofSize(patternWidth * patternHeight, Ingredient.EMPTY);
         Set<String> set = Sets.newHashSet(keys.keySet());
         set.remove(" ");
 
@@ -248,8 +233,8 @@ public class WaterDependentRecipe extends ShapedRecipe {
     }
 
     @Override
-    public ItemStack getCraftingResult(CraftingInventory inv) {
-        return this.getRecipeOutput().copy();
+    public ItemStack craft(CraftingInventory inv) {
+        return this.getOutput().copy();
     }
 
     private static String[] patternFromJson(JsonArray jsonArr) {
@@ -260,7 +245,7 @@ public class WaterDependentRecipe extends ShapedRecipe {
             throw new JsonSyntaxException("Invalid pattern: empty pattern not allowed");
         } else {
             for(int i = 0; i < astring.length; ++i) {
-                String s = JSONUtils.getString(jsonArr.get(i), "pattern[" + i + "]");
+                String s = JsonHelper.asString(jsonArr.get(i), "pattern[" + i + "]");
                 if (s.length() > MAX_WIDTH) {
                     throw new JsonSyntaxException("Invalid pattern: too many columns, " + MAX_WIDTH + " is maximum");
                 }
@@ -288,49 +273,47 @@ public class WaterDependentRecipe extends ShapedRecipe {
                 throw new JsonSyntaxException("Invalid key entry: ' ' is a reserved symbol.");
             }
 
-            map.put(entry.getKey(), Ingredient.deserialize(entry.getValue()));
+            map.put(entry.getKey(), Ingredient.fromJson(entry.getValue()));
         }
 
         map.put(" ", Ingredient.EMPTY);
         return map;
     }
 
-    public static ItemStack deserializeItem(JsonObject p_199798_0_) {
-        String s = JSONUtils.getString(p_199798_0_, "item");
-        Item item = Registry.ITEM.getValue(new ResourceLocation(s)).orElseThrow(() -> {
-            return new JsonSyntaxException("Unknown item '" + s + "'");
-        });
-        if (p_199798_0_.has("data")) {
+    public static ItemStack deserializeItem(JsonObject object) {
+        String s = JsonHelper.getString(object, "item");
+        Item item = Registry.ITEM.getOrEmpty(new Identifier(s)).orElseThrow(() -> new JsonSyntaxException("Unknown item '" + s + "'"));
+        if (object.has("data")) {
             throw new JsonParseException("Disallowed data tag found");
         } else {
-            int i = JSONUtils.getInt(p_199798_0_, "count", 1);
-            return net.minecraftforge.common.crafting.CraftingHelper.getItemStack(p_199798_0_, true);
+            int i = JsonHelper.getInt(object, "count", 1);
+            return new ItemStack(item, i);
         }
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>>  implements IRecipeSerializer<WaterDependentRecipe> {
-        private static final ResourceLocation NAME = new ResourceLocation(Druidcraft.MODID, "water_crafting");
+    public static class Serializer implements RecipeSerializer<WaterDependentRecipe> {
+        private static final Identifier NAME = new Identifier(Druidcraft.MODID, "water_crafting");
         @Override
-        public WaterDependentRecipe read(ResourceLocation recipeId, JsonObject json) {
-            String s = JSONUtils.getString(json, "group", "");
-            Map<String, Ingredient> map = WaterDependentRecipe.deserializeKey(JSONUtils.getJsonObject(json, "key"));
-            String[] astring = WaterDependentRecipe.shrink(WaterDependentRecipe.patternFromJson(JSONUtils.getJsonArray(json, "pattern")));
+        public WaterDependentRecipe read(Identifier recipeId, JsonObject json) {
+            String s = JsonHelper.getString(json, "group", "");
+            Map<String, Ingredient> map = WaterDependentRecipe.deserializeKey(JsonHelper.getObject(json, "key"));
+            String[] astring = WaterDependentRecipe.shrink(WaterDependentRecipe.patternFromJson(JsonHelper.getArray(json, "pattern")));
             int i = astring[0].length();
             int j = astring.length;
-            NonNullList<Ingredient> nonnulllist = WaterDependentRecipe.deserializeIngredients(astring, map, i, j);
-            ItemStack itemstack = WaterDependentRecipe.deserializeItem(JSONUtils.getJsonObject(json, "result"));
+            DefaultedList<Ingredient> nonnulllist = WaterDependentRecipe.deserializeIngredients(astring, map, i, j);
+            ItemStack itemstack = WaterDependentRecipe.deserializeItem(JsonHelper.getObject(json, "result"));
             return new WaterDependentRecipe(recipeId, s, i, j, nonnulllist, itemstack);
         }
 
         @Override
-        public WaterDependentRecipe read(ResourceLocation recipeId, PacketBuffer buffer) {
+        public WaterDependentRecipe read(Identifier recipeId, PacketByteBuf buffer) {
             int i = buffer.readVarInt();
             int j = buffer.readVarInt();
             String s = buffer.readString(32767);
-            NonNullList<Ingredient> nonnulllist = NonNullList.withSize(i * j, Ingredient.EMPTY);
+            DefaultedList<Ingredient> nonnulllist = DefaultedList.ofSize(i * j, Ingredient.EMPTY);
 
             for(int k = 0; k < nonnulllist.size(); ++k) {
-                nonnulllist.set(k, Ingredient.read(buffer));
+                nonnulllist.set(k, Ingredient.fromPacket(buffer));
             }
 
             ItemStack itemstack = buffer.readItemStack();
@@ -338,7 +321,7 @@ public class WaterDependentRecipe extends ShapedRecipe {
         }
 
         @Override
-        public void write(PacketBuffer buffer, WaterDependentRecipe recipe) {
+        public void write(PacketByteBuf buffer, WaterDependentRecipe recipe) {
             buffer.writeVarInt(recipe.recipeWidth);
             buffer.writeVarInt(recipe.recipeHeight);
             buffer.writeString(recipe.group);

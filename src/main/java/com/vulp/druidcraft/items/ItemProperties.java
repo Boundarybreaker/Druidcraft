@@ -1,12 +1,12 @@
 package com.vulp.druidcraft.items;
 
-import net.minecraft.item.IItemTier;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ToolMaterial;
 
-public class ItemProperties extends Item.Properties {
+public class ItemProperties extends Item.Settings {
     private int radius;
-    private IItemTier tier;
+    private ToolMaterial tier;
     private int attackDamage;
     private float attackSpeed;
     private int maxUses;
@@ -24,11 +24,11 @@ public class ItemProperties extends Item.Properties {
         return this;
     }
 
-    public IItemTier getTier() {
+    public ToolMaterial getTier() {
         return tier;
     }
 
-    public ItemProperties tier(IItemTier tier) {
+    public ItemProperties tier(ToolMaterial tier) {
         this.tier = tier;
         return this;
     }

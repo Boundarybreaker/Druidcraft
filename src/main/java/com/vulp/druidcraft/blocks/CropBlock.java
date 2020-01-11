@@ -9,9 +9,9 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 
-public class CropBlock extends CropsBlock
+public class CropBlock extends net.minecraft.block.CropBlock
 {
-    public CropBlock(Properties properties) {
+    public CropBlock(Block.Settings properties) {
         super(properties);
     }
 
