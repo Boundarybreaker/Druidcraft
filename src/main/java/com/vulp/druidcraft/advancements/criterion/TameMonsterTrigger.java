@@ -7,23 +7,22 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.vulp.druidcraft.Druidcraft;
-import net.minecraft.advancements.ICriterionInstance;
-import net.minecraft.advancements.ICriterionTrigger;
-import net.minecraft.advancements.PlayerAdvancements;
-import net.minecraft.advancements.criterion.CriterionInstance;
-import net.minecraft.advancements.criterion.EntityPredicate;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.monster.MonsterEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.advancement.PlayerAdvancementTracker;
+import net.minecraft.advancement.criterion.Criterion;
+import net.minecraft.advancement.criterion.CriterionConditions;
+import net.minecraft.advancement.criterion.CriterionProgress;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.predicate.entity.EntityPredicate;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>, ICriterionInstance {
-    private static final ResourceLocation ID = new ResourceLocation(Druidcraft.MODID + ":" + "tame_monster");
-    private final Map<PlayerAdvancements, TameMonsterTrigger.Listeners> listeners = Maps.newHashMap();
+public class TameMonsterTrigger implements Criterion<TameMonsterTrigger>, CriterionConditions {
+    private static final Identifier ID = new Identifier(Druidcraft.MODID + ":" + "tame_monster");
+    private final Map<PlayerAdvancementTracker, TameMonsterTrigger.Listeners> listeners = Maps.newHashMap();
     private TameMonsterTrigger entity;
 
     public TameMonsterTrigger(EntityPredicate any) {
@@ -33,12 +32,12 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
     }
 
     @Override
-	public ResourceLocation getId() {
+	public Identifier getId() {
         return ID;
     }
 
     @Override
-	public void addListener(PlayerAdvancements playerAdvancementsIn, ICriterionTrigger.Listener<TameMonsterTrigger> listener) {
+	public void beginTrackingCondition(PlayerAdvancementTracker playerAdvancementsIn, Criterion.ConditionsContainer<TameMonsterTrigger> listener) {
         TameMonsterTrigger.Listeners tamemonstertrigger$listeners = this.listeners.get(playerAdvancementsIn);
         if (tamemonstertrigger$listeners == null) {
             tamemonstertrigger$listeners = new TameMonsterTrigger.Listeners(playerAdvancementsIn);
@@ -49,7 +48,7 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
     }
 
     @Override
-	public void removeListener(PlayerAdvancements playerAdvancementsIn, ICriterionTrigger.Listener<TameMonsterTrigger> listener) {
+	public void endTrackingCondition(PlayerAdvancementTracker playerAdvancementsIn, Criterion.ConditionsContainer<TameMonsterTrigger> listener) {
         TameMonsterTrigger.Listeners tamemonstertrigger$listeners = this.listeners.get(playerAdvancementsIn);
         if (tamemonstertrigger$listeners != null) {
             tamemonstertrigger$listeners.remove(listener);
@@ -61,29 +60,28 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
     }
 
     @Override
-	public void removeAllListeners(PlayerAdvancements playerAdvancementsIn) {
+	public void endTracking(PlayerAdvancementTracker playerAdvancementsIn) {
         this.listeners.remove(playerAdvancementsIn);
     }
 
     @Override
-	public TameMonsterTrigger deserializeInstance(JsonObject json, JsonDeserializationContext context) {
-        EntityPredicate entitypredicate = EntityPredicate.deserialize(json.get("entity"));
+	public TameMonsterTrigger conditionsFromJson(JsonObject json, JsonDeserializationContext context) {
+        EntityPredicate entitypredicate = EntityPredicate.fromJson(json.get("entity"));
         return new TameMonsterTrigger(entitypredicate);
     }
 
     public void trigger(ServerPlayerEntity player, MobEntity entity) {
-        TameMonsterTrigger.Listeners tamemonstertrigger$listeners = this.listeners.get(player.getAdvancements());
+        TameMonsterTrigger.Listeners tamemonstertrigger$listeners = this.listeners.get(player.getAdvancementTracker());
         if (tamemonstertrigger$listeners != null) {
             tamemonstertrigger$listeners.trigger(player, entity);
         }
 
     }
 
-    public static class Instance extends CriterionInstance {
+    public static class Instance extends CriterionProgress {
         private final EntityPredicate entity;
 
         public Instance(EntityPredicate entity) {
-            super(TameMonsterTrigger.ID);
             this.entity = entity;
         }
 
@@ -100,7 +98,7 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
         }
 
         @Override
-		public JsonElement serialize() {
+		public JsonElement toJson() {
             JsonObject jsonobject = new JsonObject();
             jsonobject.add("entity", this.entity.serialize());
             return jsonobject;
@@ -108,10 +106,10 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
     }
 
     static class Listeners {
-        private final PlayerAdvancements playerAdvancements;
-        private final Set<ICriterionTrigger.Listener<TameMonsterTrigger>> listeners = Sets.newHashSet();
+        private final PlayerAdvancementTracker playerAdvancements;
+        private final Set<Criterion.ConditionsContainer<TameMonsterTrigger>> listeners = Sets.newHashSet();
 
-        public Listeners(PlayerAdvancements playerAdvancementsIn) {
+        public Listeners(PlayerAdvancementTracker playerAdvancementsIn) {
             this.playerAdvancements = playerAdvancementsIn;
         }
 
@@ -119,19 +117,19 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
             return this.listeners.isEmpty();
         }
 
-        public void add(ICriterionTrigger.Listener<TameMonsterTrigger> listener) {
+        public void add(Criterion.ConditionsContainer<TameMonsterTrigger> listener) {
             this.listeners.add(listener);
         }
 
-        public void remove(ICriterionTrigger.Listener<TameMonsterTrigger> listener) {
+        public void remove(Criterion.ConditionsContainer<TameMonsterTrigger> listener) {
             this.listeners.remove(listener);
         }
 
         public void trigger(ServerPlayerEntity player, MobEntity entity) {
-            List<ICriterionTrigger.Listener<TameMonsterTrigger>> list = null;
+            List<Criterion.ConditionsContainer<TameMonsterTrigger>> list = null;
 
-            for(ICriterionTrigger.Listener<TameMonsterTrigger> listener : this.listeners) {
-                if (listener.getCriterionInstance().test(player, entity)) {
+            for(Criterion.ConditionsContainer<TameMonsterTrigger> listener : this.listeners) {
+                if (listener.getConditions().test(player, entity)) {
                     if (list == null) {
                         list = Lists.newArrayList();
                     }
@@ -141,8 +139,8 @@ public class TameMonsterTrigger implements ICriterionTrigger<TameMonsterTrigger>
             }
 
             if (list != null) {
-                for(ICriterionTrigger.Listener<TameMonsterTrigger> listener1 : list) {
-                    listener1.grantCriterion(this.playerAdvancements);
+                for(Criterion.ConditionsContainer<TameMonsterTrigger> listener1 : list) {
+                    listener1.grant(this.playerAdvancements);
                 }
             }
 

@@ -12,7 +12,9 @@ import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.item.SpawnEggItem;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.Heightmap;
@@ -59,15 +61,11 @@ public class EntityRegistry
         return entity;
     }
 
-    public static void registerEntitySpawnEggs(final RegistryEvent.Register<Item> event)
+    public static void registerEntitySpawnEggs()
     {
-        event.getRegistry().registerAll
-                (
-                        ItemRegistry.dreadfish_spawn_egg = registerEntitySpawnEgg(dreadfish_entity, 0xE2E2D9, 0xA775FF, "dreadfish_spawn_egg"),
-                        ItemRegistry.beetle_spawn_egg = registerEntitySpawnEgg(beetle_entity, 0x57E5DC, 0x227589, "beetle_spawn_egg"),
-                        ItemRegistry.lunar_moth_spawn_egg = registerEntitySpawnEgg(lunar_moth_entity, 0x4AFFC2, 0x00CE89, "lunar_moth_spawn_egg")
-                );
-
+        ItemRegistry.dreadfish_spawn_egg = registerEntitySpawnEgg(dreadfish_entity, 0xE2E2D9, 0xA775FF, "dreadfish_spawn_egg");
+        ItemRegistry.beetle_spawn_egg = registerEntitySpawnEgg(beetle_entity, 0x57E5DC, 0x227589, "beetle_spawn_egg");
+        ItemRegistry.lunar_moth_spawn_egg = registerEntitySpawnEgg(lunar_moth_entity, 0x4AFFC2, 0x00CE89, "lunar_moth_spawn_egg");
     }
 
     public static void registerEntityWorldSpawns()
@@ -81,9 +79,8 @@ public class EntityRegistry
 
     public static Item registerEntitySpawnEgg(EntityType<?> type, int color1, int color2, String name)
     {
-        SpawnEggItem item = new SpawnEggItem(type, color1, color2, new Item.Properties().group(DruidcraftRegistry.DRUIDCRAFT));
-        item.setRegistryName(DruidcraftRegistry.location(name));
-        return item;
+        SpawnEggItem item = new SpawnEggItem(type, color1, color2, new Item.Settings().group(DruidcraftRegistry.DRUIDCRAFT));
+        return Registry.register(Registry.ITEM, new Identifier(Druidcraft.MODID, name), item);
     }
 
     public static void registerEntityWorldSpawn(boolean spawnEnabled, EntityType<?> entity, EntityClassification classification, int weight, int minGroupCountIn, int maxGroupCountIn, List<String> biomes, List<String> exclusions) {

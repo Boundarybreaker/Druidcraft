@@ -43,13 +43,21 @@ public class Druidcraft implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        DruidcraftRegistry.onBlocksRegistry();
+        DruidcraftRegistry.onEntityRegistry();
+        DruidcraftRegistry.onItemsRegistry();
+        DruidcraftRegistry.onSoundRegistry();
+        DruidcraftRegistry.onTileEntityRegistry();
+        DruidcraftRegistry.onRecipeRegistry();
+        DruidcraftRegistry.onContainerRegistry();
+        DruidcraftRegistry.onBiomeRegistry();
+        DruidcraftRegistry.onFeatureRegistry();
+        DruidcraftRegistry.onParticleRegistry();
         OreGeneration.setupOreGeneration();
         VanillaIntegrationRegistry.setup();
     }
 
     private void setup(final FMLCommonSetupEvent event) {
-        OreGeneration.setupOreGeneration();
-        VanillaIntegrationRegistry.setup();
 
         MinecraftForge.EVENT_BUS.register(new GUIRegistry());
         if (DropRateConfig.drop_seeds.get()) {

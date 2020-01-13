@@ -1,8 +1,8 @@
 package com.vulp.druidcraft.advancements;
 
 import com.vulp.druidcraft.advancements.criterion.TameMonsterTrigger;
-import net.minecraft.advancements.CriteriaTriggers;
+import com.vulp.druidcraft.mixin.MixinCriterions;
 
 public class Advancements {
-    public static final TameMonsterTrigger TAME_MONSTER = CriteriaTriggers.register(new TameMonsterTrigger());
+    public static final TameMonsterTrigger TAME_MONSTER = MixinCriterions.invokeRegister(new TameMonsterTrigger());
 }

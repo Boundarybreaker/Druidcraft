@@ -1,15 +1,15 @@
 package com.vulp.druidcraft.api;
 
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.StringIdentifiable;
 
 import java.util.Locale;
 
-public enum SmallBeamConnectionType implements IStringSerializable {
+public enum SmallBeamConnectionType implements StringIdentifiable {
     NONE,
     ATTACHED;
 
     @Override
-    public String getName() {
+    public String asString() {
         return name().toLowerCase(Locale.ROOT);
     }
 }

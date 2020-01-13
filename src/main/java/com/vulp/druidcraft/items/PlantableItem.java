@@ -25,7 +25,7 @@ public class PlantableItem extends Item implements IPlantable
     private final PlantType plantType;
     private Block crop;
 
-    public PlantableItem(Properties properties, PlantType plantType, Block crop) {
+    public PlantableItem(Item.Settings properties, PlantType plantType, Block crop) {
         super(properties);
         this.plantType = plantType;
         this.crop = crop;

@@ -13,6 +13,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
@@ -180,8 +181,8 @@ public class LunarMothEntity extends AnimalEntity {
     }
 
     @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
+    public void readCustomDataFromTag(CompoundTag compound) {
+        super.readCustomDataFromTag(compound);
         this.dataManager.set(RESTING, compound.getBoolean("MothResting"));
         this.dataManager.set(IDLING, Direction.byIndex(compound.getByte("MothIdleDirection")));
         this.dataManager.set(COLOR, compound.getInt("Color"));
@@ -191,8 +192,8 @@ public class LunarMothEntity extends AnimalEntity {
     }
 
     @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
+    public void writeCustomDataToTag(CompoundTag compound) {
+        super.writeCustomDataToTag(compound);
         compound.putBoolean("MothResting", this.dataManager.get(RESTING));
         compound.putByte("MothIdleDirection", (byte) this.dataManager.get(IDLING).getIndex());
         compound.putInt("Color", this.dataManager.get(COLOR));

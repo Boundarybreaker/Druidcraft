@@ -1,30 +1,18 @@
 package com.vulp.druidcraft.items;
 
 import com.google.common.collect.Maps;
-import com.vulp.druidcraft.blocks.LunarMothJarBlock;
 import com.vulp.druidcraft.entities.LunarMothColors;
 import com.vulp.druidcraft.entities.LunarMothEntity;
-import com.vulp.druidcraft.registry.BlockRegistry;
 import com.vulp.druidcraft.registry.EntityRegistry;
-import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.state.IProperty;
-import net.minecraft.state.StateContainer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.DefaultedList;
-import net.minecraft.util.Direction;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -43,7 +31,7 @@ public class LunarMothJarItem extends BlockItem {
     }
 
     @Override
-    public void fillItemGroup(ItemGroup group, DefaultedList<ItemStack> items) {
+    public void appendStacks(ItemGroup group, DefaultedList<ItemStack> items) {
         if (this.isIn(group)) {
             ItemStack stack = new ItemStack(this);
             CompoundTag tag = stack.getOrCreateTag();
@@ -89,7 +77,7 @@ public class LunarMothJarItem extends BlockItem {
                 if (itemstack.getTag() != null) {
                     CompoundTag tag = itemstack.getTag();
                     if (tag.contains("EntityData")) {
-                        moth.readAdditional(tag.getCompound("EntityData"));
+                        moth.readCustomDataFromTag(tag.getCompound("EntityData"));
                     }
                 }
                 itemstack.decrement(1);
@@ -99,7 +87,7 @@ public class LunarMothJarItem extends BlockItem {
                         player.dropItem(bottle, false);
                     }
                 } else {
-                    InventoryHelper.spawnItemStack(world, blockpos1.getX() + 0.5, blockpos1.getY() + 0.5, blockpos1.getZ() + 0.5, bottle);
+                    ItemScatterer.spawn(world, blockpos1.getX() + 0.5, blockpos1.getY() + 0.5, blockpos1.getZ() + 0.5, bottle);
                 }
             }
 
