@@ -8,22 +8,30 @@ import com.vulp.druidcraft.registry.BlockRegistry;
 import com.vulp.druidcraft.registry.ItemRegistry;
 import net.minecraft.block.*;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.monster.RavagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.*;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.property.*;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
@@ -37,48 +45,48 @@ import java.util.Map;
 import java.util.Random;
 
 
-public class ElderFruitBlock extends CropBlock implements IGrowable {
+public class ElderFruitBlock extends CropBlock implements Fertilizable {
 
-    public static final DirectionProperty FACING = DirectionalBlock.FACING;
-    public static final IntegerProperty AGE = BlockStateProperties.AGE_0_3;
-    public static final BooleanProperty MID_BERRY = BooleanProperty.create("mid_berry");
+    public static final DirectionProperty FACING = Properties.FACING;
+    public static final IntProperty AGE = Properties.AGE_3;
+    public static final BooleanProperty MID_BERRY = BooleanProperty.of("mid_berry");
 
-    public static final EnumProperty<CropLifeStageType> LIFE_STAGE = EnumProperty.create("life_stage", CropLifeStageType.class);
+    public static final EnumProperty<CropLifeStageType> LIFE_STAGE = EnumProperty.of("life_stage", CropLifeStageType.class);
 
     public ElderFruitBlock(Block.Settings properties) {
         super(properties);
-        this.setDefaultState(this.stateContainer.getBaseState().with(this.getAgeProperty(), 0).with(LIFE_STAGE, CropLifeStageType.FLOWER).with(MID_BERRY, false).with(FACING, Direction.NORTH));
+        this.setDefaultState(this.getStateManager().getDefaultState().with(this.getAgeProperty(), 0).with(LIFE_STAGE, CropLifeStageType.FLOWER).with(MID_BERRY, false).with(FACING, Direction.NORTH));
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getOutlineShape(BlockState state, BlockView worldIn, BlockPos pos, EntityContext context) {
         VoxelShape voxelshape = VoxelShapes.empty();
-        Vec3d vec3d = state.getOffset(worldIn, pos);
+        Vec3d vec3d = state.getOffsetPos(worldIn, pos);
 
         if (state.get(FACING) == Direction.UP) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(2.0D, 15.0D, 2.0D, 14.0D, 16.0D, 14.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(2.0D, 15.0D, 2.0D, 14.0D, 16.0D, 14.0D));
         }
         if (state.get(FACING) == Direction.DOWN) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 1.0D, 14.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 1.0D, 14.0D));
         }
         if (state.get(FACING) == Direction.NORTH) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(2.0D, 2.0D, 0.0D, 14.0D, 14.0D, 1.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(2.0D, 2.0D, 0.0D, 14.0D, 14.0D, 1.0D));
         }
         if (state.get(FACING) == Direction.EAST) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(15.0D, 2.0D, 2.0D, 16.0D, 14.0D, 14.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(15.0D, 2.0D, 2.0D, 16.0D, 14.0D, 14.0D));
         }
         if (state.get(FACING) == Direction.SOUTH) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(2.0D, 2.0D, 15.0D, 14.0D, 14.0D, 16.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(2.0D, 2.0D, 15.0D, 14.0D, 14.0D, 16.0D));
         }
         if (state.get(FACING) == Direction.WEST) {
-            voxelshape = VoxelShapes.or(voxelshape, Block.makeCuboidShape(0.0D, 2.0D, 2.0D, 1.0D, 14.0D, 14.0D));
+            voxelshape = VoxelShapes.union(voxelshape, Block.createCuboidShape(0.0D, 2.0D, 2.0D, 1.0D, 14.0D, 14.0D));
         }
-        return voxelshape.withOffset(vec3d.x, vec3d.y, vec3d.z);
+        return voxelshape.offset(vec3d.x, vec3d.y, vec3d.z);
     }
 
     @Override
-    public Vec3d getOffset(BlockState state, IBlockReader worldIn, BlockPos pos) {
-        long i = MathHelper.getCoordinateRandom(pos.getX(), pos.getY(), pos.getZ());
+    public Vec3d getOffsetPos(BlockState state, BlockView worldIn, BlockPos pos) {
+        long i = MathHelper.hashCode(pos.getX(), pos.getY(), pos.getZ());
         return new Vec3d(
                 !(state.get(FACING) == Direction.EAST || state.get(FACING) == Direction.WEST) ?(((i & 15L) / 15.0F) - 0.5D) * 0.5D : 0.0D,
                 !(state.get(FACING) == Direction.UP || state.get(FACING) == Direction.DOWN) ? (((i >> 4 & 15L) / 15.0F) - 0.5D) * 0.5D : 0.0D,
@@ -86,14 +94,14 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
     }
 
     @Override
-    public ItemStack getItem(IBlockReader worldIn, BlockPos pos, BlockState state) {
+    public ItemStack getPickStack(BlockView worldIn, BlockPos pos, BlockState state) {
         return new ItemStack(this);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        for (Direction direction : context.getNearestLookingDirections()) {
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        for (Direction direction : context.getPlacementDirections()) {
             BlockState blockstate = this.getDefaultState().with(FACING, Direction.NORTH);;
             if (direction == Direction.UP) {
                 blockstate = this.getDefaultState().with(FACING, Direction.UP);
@@ -109,7 +117,7 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
                 blockstate = this.getDefaultState().with(FACING, Direction.WEST);
             }
 
-            if (context.getWorld().getBlockState(context.getPos()).getBlock() instanceof ElderLeavesBlock) {
+            if (context.getWorld().getBlockState(context.getBlockPos()).getBlock() instanceof ElderLeavesBlock) {
                 return blockstate;
             }
         }
@@ -129,7 +137,7 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
     }
 
     @Override
-    public IntegerProperty getAgeProperty() {
+    public IntProperty getAgeProperty() {
         return AGE;
     }
 
@@ -144,7 +152,7 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
     }
 
     @Override
-    public boolean isMaxAge(BlockState state) {
+    public boolean isMature(BlockState state) {
         return state.get(this.getAgeProperty()) >= this.getMaxAge();
     }
 
@@ -182,13 +190,13 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
     }
 
     @Override
-    public void randomTick(BlockState state, World worldIn, BlockPos pos, Random random) {
+    public void randomTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random) {
         super.randomTick(state, worldIn, pos, random);
-        if (!worldIn.isRemote && (worldIn.rand.nextInt(8) == 0)) {
+        if (!worldIn.isClient && (worldIn.random.nextInt(8) == 0)) {
             if (CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.NONE) {
                     worldIn.setBlockState(pos, Blocks.AIR.getDefaultState());
-                    if (worldIn.rand.nextInt(4) == 0) {
-                        spawnAsEntity(worldIn, pos, new ItemStack(ItemRegistry.elderberries, 1));
+                    if (worldIn.random.nextInt(4) == 0) {
+                        dropStack(worldIn, pos, new ItemStack(ItemRegistry.elderberries, 1));
                 }
             }
         }
@@ -198,9 +206,9 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
     public void grow(World worldIn, BlockPos pos, BlockState state) {
         if (isGrowable(worldIn, pos)) {
             BlockState lastState = state.getBlockState();
-            if (CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.BERRY && lastState.get(LIFE_STAGE) != CropLifeStageType.BERRY && isMaxAge(lastState)) {
+            if (CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.BERRY && lastState.get(LIFE_STAGE) != CropLifeStageType.BERRY && isMature(lastState)) {
                 worldIn.setBlockState(pos, lastState.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
-            } else if (worldIn.getBlockState(pos).get(MID_BERRY) && isMaxAge(lastState)) {
+            } else if (worldIn.getBlockState(pos).get(MID_BERRY) && isMature(lastState)) {
                 worldIn.setBlockState(pos, lastState.with(MID_BERRY, false).with(LIFE_STAGE, CropLifeStageType.BERRY));
             } else {
                 int i = this.getAge(state) + this.getBonemealAgeIncrease(worldIn);
@@ -224,9 +232,9 @@ public class ElderFruitBlock extends CropBlock implements IGrowable {
         return 1;
     }
 
-    protected static float getGrowthChance(Block blockIn, IBlockReader worldIn, BlockPos pos) {
+    protected static float getGrowthChance(Block blockIn, BlockView worldIn, BlockPos pos) {
         float f = 5.0F;
-        if (worldIn.getLightValue(pos) >= 9) {
+        if (worldIn.getLuminance(pos) >= 9) {
             return f;
         }
         else return f/1.2F;

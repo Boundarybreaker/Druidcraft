@@ -5,6 +5,7 @@
   "mixins": [
     "MixinCraftingInventory",
     "MixinCraftingResultSlot",
+    "MixinCriterions",
     "MixinPlayerContainer"
   ]
 }

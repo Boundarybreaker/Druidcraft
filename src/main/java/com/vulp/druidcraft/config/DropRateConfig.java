@@ -1,17 +1,19 @@
 package com.vulp.druidcraft.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import blue.endless.jankson.JsonObject;
 
 public class DropRateConfig
 {
-    public static ForgeConfigSpec.IntValue hemp_seed_drops;
-    public static ForgeConfigSpec.BooleanValue drop_seeds;
+    public static int hemp_seed_drops = 8;
+    public static boolean drop_seeds = true;
 
-    public static void init(ForgeConfigSpec.Builder server, ForgeConfigSpec.Builder client)
-    {
-        server.comment("Drop Rate Config");
+    public static void load(JsonObject json) {
+        drop_seeds = json.getBoolean("drop_seeds", drop_seeds);
+        hemp_seed_drops = json.getInt("hemp_seed_drops", hemp_seed_drops);
+    }
 
-        hemp_seed_drops = server.comment("Rate of hemp seed drops from grass blocks.").defineInRange("droprate.hemp_seed_rate", 8, 0, 100);
-        drop_seeds = server.comment("Whether to have seeds from this mod drop from grass at all.").define("droprate.drop_seeds", true);
+    public static void save(JsonObject json) {
+        json.putDefault("drop_seeds", drop_seeds, "Whether to have seeds from this mod drop from grass at all.");
+        json.putDefault("hemp_seed_drops", hemp_seed_drops, "Rate of hemp seed drops from grass blocks. Value from 0 to 100.");
     }
 }

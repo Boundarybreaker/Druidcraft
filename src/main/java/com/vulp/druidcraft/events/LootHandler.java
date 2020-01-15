@@ -1,29 +1,45 @@
 package com.vulp.druidcraft.events;
 
+import com.vulp.druidcraft.config.Configuration;
 import com.vulp.druidcraft.config.DropRateConfig;
 import com.vulp.druidcraft.registry.ItemRegistry;
+import net.fabricmc.fabric.api.loot.v1.FabricLootPoolBuilder;
+import net.fabricmc.fabric.api.loot.v1.event.LootTableLoadingCallback;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.world.World;
-import net.minecraftforge.event.world.BlockEvent.BreakEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.loot.condition.InvertedLootCondition;
+import net.minecraft.loot.condition.MatchToolLootCondition;
+import net.minecraft.loot.condition.RandomChanceLootCondition;
+import net.minecraft.loot.entry.ItemEntry;
+import net.minecraft.predicate.item.ItemPredicate;
 
 public class LootHandler {
 
-    @SubscribeEvent
-    public void onGrassBroken(BreakEvent event) {
-        if (!event.getWorld().isRemote()) {
-            if ((event.getPlayer().getHeldItemMainhand().getItem() != Items.SHEARS) || (!event.getPlayer().isCreative())) {
-                if (event.getState().getBlock() == Blocks.GRASS || event.getState().getBlock() == Blocks.TALL_GRASS || event.getState().getBlock() == Blocks.FERN) {
-                    if (Math.random() <= (double) DropRateConfig.hemp_seed_drops.get() / 100) {
-                        event.getWorld().setBlockState(event.getPos(), Blocks.AIR.getDefaultState(), 2);
-                        event.getWorld().addEntity(new ItemEntity((World) event.getWorld(), event.getPos().getX(),
-                                event.getPos().getY(), event.getPos().getZ(), new ItemStack(ItemRegistry.hemp_seeds, 1)));
-                    }
-                }
+    public static void init() {
+        LootTableLoadingCallback.EVENT.register(((resourceManager, lootManager, id, supplier, lootTableSetter) -> {
+            if (!DropRateConfig.drop_seeds) return;
+            if (id.equals(Blocks.GRASS.getDropTableId()) || id.equals(Blocks.TALL_GRASS.getDropTableId()) || id.equals(Blocks.FERN.getDropTableId())) {
+                FabricLootPoolBuilder builder = FabricLootPoolBuilder.builder();
+                builder.withCondition(
+                        InvertedLootCondition.builder(
+                                MatchToolLootCondition.builder(
+                                        ItemPredicate.Builder.create()
+                                                //TODO: FabricToolTags.SHEARS once that's merged
+                                                .item(Items.SHEARS)
+                                )
+                        )
+                );
+                float dropChance = DropRateConfig.hemp_seed_drops / 100F;
+                builder.withCondition(
+                        RandomChanceLootCondition.builder(dropChance)
+                );
+                builder.withEntry(
+                        ItemEntry.builder(
+                                ItemRegistry.hemp_seeds
+                        )
+                );
+                supplier.withPool(builder);
             }
-        }
+        }));
     }
 }

@@ -2,9 +2,14 @@ package com.vulp.druidcraft.inventory.container;
 
 import com.vulp.druidcraft.entities.BeetleEntity;
 import com.vulp.druidcraft.registry.GUIRegistry;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.container.Container;
+import net.minecraft.container.Slot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
@@ -13,23 +18,22 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class BeetleInventoryContainer extends Container {
-    private IInventory beetleInventory;
+    private Inventory beetleInventory;
     private BeetleEntity beetle;
 
-    public BeetleInventoryContainer(int windowID, PlayerInventory playerInventory, IInventory inventory, int id) {
+    public BeetleInventoryContainer(int windowID, PlayerInventory playerInventory, Inventory inventory, int id) {
         super(GUIRegistry.beetle_inv, windowID);
         this.beetleInventory = inventory;
-        this.beetle = (BeetleEntity) playerInventory.player.world.getEntityByID(id);
-        inventory.openInventory(playerInventory.player);
+        this.beetle = (BeetleEntity) playerInventory.player.world.getEntityById(id);
+        inventory.onInvOpen(playerInventory.player);
         this.addSlot(new Slot(inventory, 0, 18, 72) {
             @Override
-            public boolean isItemValid(ItemStack stack) {
-                return stack.getItem() == Items.SADDLE && !this.getHasStack();
+            public boolean canInsert(ItemStack stack) {
+                return stack.getItem() == Items.SADDLE && !this.hasStack();
             }
 
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public boolean isEnabled() {
+            public boolean canTakeItems(PlayerEntity player) {
                 return true;
             }
         });
@@ -61,35 +65,35 @@ public class BeetleInventoryContainer extends Container {
     }
 
     @Override
-    public boolean canInteractWith(PlayerEntity playerIn) {
+    public boolean canUse(PlayerEntity playerIn) {
         return this.beetleInventory.isUsableByPlayer(playerIn) && this.beetle.isAlive() && this.beetle.getDistance(playerIn) < 8.0F;
     }
 
     @Override
     public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.inventorySlots.get(index);
-        if (slot != null && slot.getHasStack()) {
+        Slot slot = this.slotList.get(index);
+        if (slot != null && slot.hasStack()) {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
-            if (index < this.beetleInventory.getSizeInventory()) {
-                if (!this.mergeItemStack(itemstack1, this.beetleInventory.getSizeInventory(), this.inventorySlots.size(), true)) {
+            if (index < this.beetleInventory.getInvSize()) {
+                if (!this.mergeItemStack(itemstack1, this.beetleInventory.getInvSize(), this.slotList.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (this.getSlot(1).isItemValid(itemstack1) && !this.getSlot(1).getHasStack()) {
+            } else if (this.getSlot(1).canInsert(itemstack1) && !this.getSlot(1).hasStack()) {
                 if (!this.mergeItemStack(itemstack1, 1, 2, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (this.getSlot(0).isItemValid(itemstack1)) {
+            } else if (this.getSlot(0).canInsert(itemstack1)) {
                 if (!this.mergeItemStack(itemstack1, 0, 1, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (this.beetleInventory.getSizeInventory() <= 2 || !this.mergeItemStack(itemstack1, 2, this.beetleInventory.getSizeInventory(), false)) {
+            } else if (this.beetleInventory.getInvSize() <= 2 || !this.mergeItemStack(itemstack1, 2, this.beetleInventory.getInvSize(), false)) {
                 return ItemStack.EMPTY;
             }
 
             if (itemstack1.isEmpty()) {
-                slot.putStack(ItemStack.EMPTY);
+                slot.setStack(ItemStack.EMPTY);
             } else {
                 slot.onSlotChanged();
             }
@@ -99,9 +103,9 @@ public class BeetleInventoryContainer extends Container {
     }
 
     @Override
-    public void onContainerClosed(PlayerEntity playerIn) {
-        super.onContainerClosed(playerIn);
-        this.beetleInventory.closeInventory(playerIn);
+    public void close(PlayerEntity playerIn) {
+        super.close(playerIn);
+        this.beetleInventory.onInvClose(playerIn);
     }
 
 }

@@ -5,23 +5,23 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.ContainerBlock;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.container.Container;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -32,28 +32,27 @@ public class CrateTempBlock extends BlockWithEntity {
 
     public CrateTempBlock(Block.Settings properties) {
         super(properties);
-        this.setDefaultState(this.stateContainer.getBaseState().with(PROPERTY_OPEN, false));
+        this.setDefaultState(this.getStateManager().getDefaultState().with(PROPERTY_OPEN, false));
     }
 
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isRemote) {
-            return true;
-        } else {
-            TileEntity tileentity = worldIn.getTileEntity(pos);
+    @Override
+    public ActionResult onUse(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockHitResult hit) {
+        if (!worldIn.isClient) {
+            BlockEntity tileentity = worldIn.getBlockEntity(pos);
             if (tileentity instanceof CrateTileEntity) {
-                player.openContainer((CrateTileEntity)tileentity);
+                player.openContainer((CrateTileEntity) tileentity);
             }
 
-            return true;
         }
+        return ActionResult.SUCCESS;
     }
 
     public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) {
-            TileEntity tileentity = worldIn.getTileEntity(pos);
-            if (tileentity instanceof IInventory) {
-                InventoryHelper.dropInventoryItems(worldIn, pos, (IInventory)tileentity);
-                worldIn.updateComparatorOutputLevel(pos, this);
+            BlockEntity tileentity = worldIn.getBlockEntity(pos);
+            if (tileentity instanceof Inventory) {
+                ItemScatterer.spawn(worldIn, pos, (Inventory)tileentity);
+                worldIn.updateNeighborsAlways(pos, this);
             }
 
             super.onReplaced(state, worldIn, pos, newState, isMoving);
@@ -61,8 +60,9 @@ public class CrateTempBlock extends BlockWithEntity {
 
     }
 
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        TileEntity tileentity = worldIn.getTileEntity(pos);
+    @Override
+    public void scheduledTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random) {
+        BlockEntity tileentity = worldIn.getBlockEntity(pos);
         if (tileentity instanceof CrateTileEntity) {
             ((CrateTileEntity)tileentity).func_213962_h();
         }
@@ -70,7 +70,8 @@ public class CrateTempBlock extends BlockWithEntity {
     }
 
     @Nullable
-    public BlockEntity createBlockEntity(IBlockReader worldIn) {
+    @Override
+    public BlockEntity createBlockEntity(BlockView worldIn) {
         return new CrateTileEntity();
     }
 
@@ -80,10 +81,10 @@ public class CrateTempBlock extends BlockWithEntity {
     }
 
     public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (stack.hasDisplayName()) {
-            TileEntity tileentity = worldIn.getTileEntity(pos);
+        if (stack.hasCustomName()) {
+            BlockEntity tileentity = worldIn.getBlockEntity(pos);
             if (tileentity instanceof CrateTileEntity) {
-                ((CrateTileEntity)tileentity).setCustomName(stack.getDisplayName());
+                ((CrateTileEntity)tileentity).setCustomName(stack.getName());
             }
         }
 
@@ -96,18 +97,20 @@ public class CrateTempBlock extends BlockWithEntity {
 
     /** @deprecated */
     public int getComparatorInputOverride(BlockState blockState, World worldIn, BlockPos pos) {
-        return Container.calcRedstone(worldIn.getTileEntity(pos));
+        return Container.calculateComparatorOutput(worldIn.getBlockEntity(pos));
     }
 
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(PROPERTY_OPEN);
     }
 
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        return (BlockState)this.getDefaultState();
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        return this.getDefaultState();
     }
 
     static {
-        PROPERTY_OPEN = BlockStateProperties.OPEN;
+        PROPERTY_OPEN = Properties.OPEN;
     }
 }

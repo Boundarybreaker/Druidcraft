@@ -2,30 +2,26 @@ package com.vulp.druidcraft.util;
 
 import com.vulp.druidcraft.items.EffectiveSickleItem;
 import com.vulp.druidcraft.items.RadialToolItem;
+import net.fabricmc.fabric.impl.mining.level.ToolManager;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tags.BlockTags;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.Tags;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class SickleHarvestUtil {
     public static void breakNeighbours(ItemStack tool, World world, BlockPos pos, PlayerEntity player) {
-        if (world.isRemote) return;
+        if (world.isClient) return;
 
-        int fortune = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, tool);
-        int silkTouch = EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, tool);
+        int fortune = EnchantmentHelper.getLevel(Enchantments.FORTUNE, tool);
+        int silkTouch = EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, tool);
         int blocksBroken = 0;
 
         for (BlockPos target : nearbyBlocks(tool, pos, world, player)) {
@@ -33,12 +29,12 @@ public class SickleHarvestUtil {
 
             EffectiveSickleItem sickleItem = (EffectiveSickleItem) tool.getItem();
             if (sickleItem.getEffectiveBlocks().contains(state.getBlock()) || sickleItem.getEffectiveMaterials().contains(state.getMaterial())) {
-                world.destroyBlock(target, false);
-                state.getBlock().harvestBlock(world, player, target, state, null, tool);
+                world.breakBlock(target, false);
+                state.getBlock().afterBreak(world, player, target, state, null, tool);
                 ++blocksBroken;
             }
         }
-        tool.damageItem(Math.round(blocksBroken/2), player, p -> p.sendBreakAnimation(Hand.MAIN_HAND));
+        tool.damage(Math.round(blocksBroken/2), player, p -> p.sendToolBreakStatus(Hand.MAIN_HAND));
     }
 
     public static Set<BlockPos> nearbyBlocks(ItemStack tool, BlockPos pos, World world, PlayerEntity player) {
@@ -62,7 +58,7 @@ public class SickleHarvestUtil {
                     if (BlockTags.WITHER_IMMUNE.contains(state.getBlock())) {
                         continue;
                     }
-                    if (!ForgeHooks.canHarvestBlock(state, player, world, potential)) {
+                    if (!ToolManager.handleIsEffectiveOn(tool, state).get()) {
                         continue;
                     }
 
