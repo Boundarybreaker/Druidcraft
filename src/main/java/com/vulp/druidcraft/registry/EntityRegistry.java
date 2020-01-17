@@ -13,7 +13,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -40,7 +40,7 @@ public class EntityRegistry
     }
 
     private static <T extends Entity> EntityType<T> createEntity(EntityType.IFactory<T> factory, EntityClassification entityClassification, String name, float width, float height, int trackingRange,  BiFunction<FMLPlayMessages.SpawnEntity, World, T> customClientFactory) {
-        ResourceLocation location = new ResourceLocation(Druidcraft.MODID, name);
+        Identifier location = new Identifier(Druidcraft.MODID, name);
 
         EntityType.Builder<T> builder = EntityType.Builder.create(factory, entityClassification)
                 .size(width, height)

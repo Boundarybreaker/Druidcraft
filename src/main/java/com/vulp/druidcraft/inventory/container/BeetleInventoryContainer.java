@@ -1,28 +1,20 @@
 package com.vulp.druidcraft.inventory.container;
 
 import com.vulp.druidcraft.entities.BeetleEntity;
-import com.vulp.druidcraft.registry.GUIRegistry;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.container.Container;
 import net.minecraft.container.Slot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class BeetleInventoryContainer extends Container {
     private Inventory beetleInventory;
     private BeetleEntity beetle;
 
     public BeetleInventoryContainer(int windowID, PlayerInventory playerInventory, Inventory inventory, int id) {
-        super(GUIRegistry.beetle_inv, windowID);
+        super(null, windowID);
         this.beetleInventory = inventory;
         this.beetle = (BeetleEntity) playerInventory.player.world.getEntityById(id);
         inventory.onInvOpen(playerInventory.player);
@@ -66,36 +58,36 @@ public class BeetleInventoryContainer extends Container {
 
     @Override
     public boolean canUse(PlayerEntity playerIn) {
-        return this.beetleInventory.isUsableByPlayer(playerIn) && this.beetle.isAlive() && this.beetle.getDistance(playerIn) < 8.0F;
+        return this.beetleInventory.canPlayerUseInv(playerIn) && this.beetle.isAlive() && this.beetle.distanceTo(playerIn) < 8.0F;
     }
 
     @Override
-    public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
+    public ItemStack transferSlot(PlayerEntity playerIn, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slotList.get(index);
         if (slot != null && slot.hasStack()) {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
             if (index < this.beetleInventory.getInvSize()) {
-                if (!this.mergeItemStack(itemstack1, this.beetleInventory.getInvSize(), this.slotList.size(), true)) {
+                if (!this.insertItem(itemstack1, this.beetleInventory.getInvSize(), this.slotList.size(), true)) {
                     return ItemStack.EMPTY;
                 }
             } else if (this.getSlot(1).canInsert(itemstack1) && !this.getSlot(1).hasStack()) {
-                if (!this.mergeItemStack(itemstack1, 1, 2, false)) {
+                if (!this.insertItem(itemstack1, 1, 2, false)) {
                     return ItemStack.EMPTY;
                 }
             } else if (this.getSlot(0).canInsert(itemstack1)) {
-                if (!this.mergeItemStack(itemstack1, 0, 1, false)) {
+                if (!this.insertItem(itemstack1, 0, 1, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (this.beetleInventory.getInvSize() <= 2 || !this.mergeItemStack(itemstack1, 2, this.beetleInventory.getInvSize(), false)) {
+            } else if (this.beetleInventory.getInvSize() <= 2 || !this.insertItem(itemstack1, 2, this.beetleInventory.getInvSize(), false)) {
                 return ItemStack.EMPTY;
             }
 
             if (itemstack1.isEmpty()) {
                 slot.setStack(ItemStack.EMPTY);
             } else {
-                slot.onSlotChanged();
+                slot.markDirty();
             }
         }
 

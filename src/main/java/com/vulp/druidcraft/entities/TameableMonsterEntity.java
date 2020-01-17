@@ -2,71 +2,74 @@ package com.vulp.druidcraft.entities;
 
 import com.vulp.druidcraft.advancements.Advancements;
 import com.vulp.druidcraft.entities.AI.goals.SitGoalMonster;
-import net.minecraft.advancements.CriteriaTriggers;
-import net.minecraft.entity.*;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.TargetPredicate;
+import net.minecraft.entity.ai.pathing.EntityNavigation;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.particles.IParticleData;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.pathfinding.PathNavigator;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.server.management.PreYggdrasilConverter;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.scoreboard.AbstractTeam;
+import net.minecraft.server.ServerConfigHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-public class TameableMonsterEntity extends CreatureEntity {
-    static final DataParameter<Byte> TAMED = EntityDataManager.createKey(TameableMonsterEntity.class, DataSerializers.BYTE);
-    private static final DataParameter<Optional<UUID>> OWNER_UNIQUE_ID = EntityDataManager.createKey(TameableMonsterEntity.class, DataSerializers.OPTIONAL_UNIQUE_ID);
+public abstract class TameableMonsterEntity extends MobEntityWithAi {
+    static final TrackedData<Byte> TAMED = DataTracker.registerData(TameableMonsterEntity.class, TrackedDataHandlerRegistry.BYTE);
+    private static final TrackedData<Optional<UUID>> OWNER_UNIQUE_ID = DataTracker.registerData(TameableMonsterEntity.class, TrackedDataHandlerRegistry.OPTIONAL_UUID);
     SitGoalMonster sitGoal;
 
-    TameableMonsterEntity(EntityType<? extends TameableMonsterEntity> type, World worldIn) {
+    TameableMonsterEntity(EntityType type, World worldIn) {
         super(type, worldIn);
         this.setupTamedAI();
-        this.experienceValue = 5;
+        this.experiencePoints = 5;
     }
 
     @Override
-    public PathNavigator getNavigator() {
-        if (this.isPassenger() && this.getRidingEntity() instanceof TameableMonsterEntity) {
-            MobEntity mobentity = (MobEntity)this.getRidingEntity();
-            return mobentity.getNavigator();
+    public EntityNavigation getNavigation() {
+        if (this.hasVehicle() && this.getVehicle() instanceof TameableMonsterEntity) {
+            MobEntity mobentity = (MobEntity)this.getVehicle();
+            return mobentity.getNavigation();
         } else {
-            return this.navigator;
+            return this.navigation;
         }
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
-        this.dataManager.register(TAMED, (byte)0);
-        this.dataManager.register(OWNER_UNIQUE_ID, Optional.empty());
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(TAMED, (byte)0);
+        this.dataTracker.startTracking(OWNER_UNIQUE_ID, Optional.empty());
     }
 
     @Override
-    protected void registerAttributes() {
-       super.registerAttributes();
-       this.getAttributes().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
+    protected void initAttributes() {
+       super.initAttributes();
+       this.getAttributes().register(EntityAttributes.ATTACK_DAMAGE);
     }
 
     @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
+    public void writeCustomDataToTag(CompoundTag compound) {
+        super.writeCustomDataToTag(compound);
         if (this.getOwnerId() == null) {
             compound.putString("OwnerUUID", "");
         } else {
@@ -80,14 +83,14 @@ public class TameableMonsterEntity extends CreatureEntity {
      * (abstract) Protected helper method to read subclass entity data from NBT.
      */
     @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
+    public void readCustomDataFromTag(CompoundTag compound) {
+        super.readCustomDataFromTag(compound);
         String s;
         if (compound.contains("OwnerUUID", 8)) {
             s = compound.getString("OwnerUUID");
         } else {
             String s1 = compound.getString("Owner");
-            s = PreYggdrasilConverter.convertMobOwnerIfNeeded(Objects.requireNonNull(this.getServer()), s1);
+            s = ServerConfigHandler.getPlayerUuidByName(Objects.requireNonNull(this.getServer()), s1);
         }
 
         if (!s.isEmpty()) {
@@ -107,18 +110,18 @@ public class TameableMonsterEntity extends CreatureEntity {
     }
 
     @Override
-    public boolean canDespawn(double distanceToClosestPlayer) {
+    public boolean canImmediatelyDespawn(double distanceToClosestPlayer) {
         return !this.isTamed() || !this.hasCustomName();
     }
 
     @Override
-    public boolean preventDespawn() {
+    public boolean cannotDespawn() {
         return this.isTamed() || this.hasCustomName();
     }
 
     @Override
-    public boolean canBeLeashedTo(PlayerEntity player) {
-        return !this.getLeashed();
+    public boolean canBeLeashedBy(PlayerEntity player) {
+        return !this.isLeashed();
     }
 
     public boolean isPreventingPlayerRest(PlayerEntity playerIn) {
@@ -128,22 +131,22 @@ public class TameableMonsterEntity extends CreatureEntity {
     @Override
     public void tick() {
         super.tick();
-        if (!this.world.isRemote && this.world.getDifficulty() == Difficulty.PEACEFUL && !this.isTamed()) {
+        if (!this.world.isClient && this.world.getDifficulty() == Difficulty.PEACEFUL && !this.isTamed()) {
             this.remove();
         }
     }
 
     @Override
-    public void livingTick() {
-        this.updateArmSwingProgress();
-        super.livingTick();
+    protected void mobTick() {
+        this.tickHandSwing();
+        super.mobTick();
     }
 
     /**
      * Play the taming effect, will either be hearts or smoke depending on status
      */
     void playTameEffect(boolean play) {
-        IParticleData particle = ParticleTypes.AMBIENT_ENTITY_EFFECT;
+        ParticleEffect particle = ParticleTypes.AMBIENT_ENTITY_EFFECT;
         if (play) {
             particle = ParticleTypes.HEART;
         }
@@ -152,10 +155,10 @@ public class TameableMonsterEntity extends CreatureEntity {
         }
 
         for(int i = 0; i < 7; ++i) {
-            double d0 = this.rand.nextGaussian() * 0.02D;
-            double d1 = this.rand.nextGaussian() * 0.02D;
-            double d2 = this.rand.nextGaussian() * 0.02D;
-            this.world.addParticle(particle, this.posX + (double)(this.rand.nextFloat() * this.getWidth() * 2.0F) - (double)this.getWidth(), this.posY + 0.5D + (double)(this.rand.nextFloat() * this.getHeight()), this.posZ + (double)(this.rand.nextFloat() * this.getWidth() * 2.0F) - (double)this.getWidth(), d0, d1, d2);
+            double d0 = this.random.nextGaussian() * 0.02D;
+            double d1 = this.random.nextGaussian() * 0.02D;
+            double d2 = this.random.nextGaussian() * 0.02D;
+            this.world.addParticle(particle, this.getPos().x + (double)(this.random.nextFloat() * this.getWidth() * 2.0F) - (double)this.getWidth(), this.getPos().y + 0.5D + (double)(this.random.nextFloat() * this.getHeight()), this.getPos().z + (double)(this.random.nextFloat() * this.getWidth() * 2.0F) - (double)this.getWidth(), d0, d1, d2);
         }
 
     }
@@ -177,15 +180,15 @@ public class TameableMonsterEntity extends CreatureEntity {
     }
 
     public boolean isTamed() {
-        return (this.dataManager.get(TAMED) & 4) != 0;
+        return (this.dataTracker.get(TAMED) & 4) != 0;
     }
 
     public void setTamed(boolean tamed) {
-        byte b0 = this.dataManager.get(TAMED);
+        byte b0 = this.dataTracker.get(TAMED);
         if (tamed) {
-            this.dataManager.set(TAMED, (byte)(b0 | 4));
+            this.dataTracker.set(TAMED, (byte)(b0 | 4));
         } else {
-            this.dataManager.set(TAMED, (byte)(b0 & -5));
+            this.dataTracker.set(TAMED, (byte)(b0 & -5));
         }
 
         this.setupTamedAI();
@@ -195,31 +198,31 @@ public class TameableMonsterEntity extends CreatureEntity {
     }
 
     public boolean isSitting() {
-        return (this.dataManager.get(TAMED) & 1) != 0;
+        return (this.dataTracker.get(TAMED) & 1) != 0;
     }
 
     public void setSitting(boolean sitting) {
-        byte b0 = this.dataManager.get(TAMED);
+        byte b0 = this.dataTracker.get(TAMED);
         if (sitting) {
-            this.dataManager.set(TAMED, (byte)(b0 | 1));
+            this.dataTracker.set(TAMED, (byte)(b0 | 1));
         } else {
-            this.dataManager.set(TAMED, (byte)(b0 & -2));
+            this.dataTracker.set(TAMED, (byte)(b0 & -2));
         }
 
     }
 
     @Nullable
     private UUID getOwnerId() {
-        return this.dataManager.get(OWNER_UNIQUE_ID).orElse(null);
+        return this.dataTracker.get(OWNER_UNIQUE_ID).orElse(null);
     }
 
     private void setOwnerId(@Nullable UUID p_184754_1_) {
-        this.dataManager.set(OWNER_UNIQUE_ID, Optional.ofNullable(p_184754_1_));
+        this.dataTracker.set(OWNER_UNIQUE_ID, Optional.ofNullable(p_184754_1_));
     }
 
     void setTamedBy(PlayerEntity player) {
         this.setTamed(true);
-        this.setOwnerId(player.getUniqueID());
+        this.setOwnerId(player.getUuid());
         if (player instanceof ServerPlayerEntity) {
             Advancements.TAME_MONSTER.trigger((ServerPlayerEntity)player, this);
         }
@@ -237,8 +240,8 @@ public class TameableMonsterEntity extends CreatureEntity {
     }
 
     @Override
-    public boolean canAttack(LivingEntity target) {
-        return !this.isOwner(target) && super.canAttack(target);
+    public boolean isTarget(LivingEntity target, TargetPredicate predicate) {
+        return !this.isOwner(target) && super.isTarget(target, predicate);
     }
 
     boolean isOwner(LivingEntity entityIn) {
@@ -246,8 +249,8 @@ public class TameableMonsterEntity extends CreatureEntity {
     }
 
     @Override
-    public boolean attemptTeleport(double p_213373_1_, double p_213373_3_, double p_213373_5_, boolean p_213373_7_) {
-        return super.attemptTeleport(p_213373_1_, p_213373_3_, p_213373_5_, p_213373_7_);
+    public boolean teleport(double p_213373_1_, double p_213373_3_, double p_213373_5_, boolean p_213373_7_) {
+        return super.teleport(p_213373_1_, p_213373_3_, p_213373_5_, p_213373_7_);
     }
 
     /**
@@ -262,22 +265,22 @@ public class TameableMonsterEntity extends CreatureEntity {
     }
 
     @Override
-    public Team getTeam() {
+    public AbstractTeam getScoreboardTeam() {
         if (this.isTamed()) {
             LivingEntity livingentity = this.getOwner();
             if (livingentity != null) {
-                return livingentity.getTeam();
+                return livingentity.getScoreboardTeam();
             }
         }
 
-        return super.getTeam();
+        return super.getScoreboardTeam();
     }
 
     /**
      * Returns whether this Entity is on the same team as the given Entity.
      */
     @Override
-    public boolean isOnSameTeam(Entity entityIn) {
+    public boolean isTeammate(Entity entityIn) {
         if (this.isTamed()) {
             LivingEntity livingentity = this.getOwner();
             if (entityIn == livingentity) {
@@ -285,11 +288,11 @@ public class TameableMonsterEntity extends CreatureEntity {
             }
 
             if (livingentity != null) {
-                return livingentity.isOnSameTeam(entityIn);
+                return livingentity.isTeammate(entityIn);
             }
         }
 
-        return super.isOnSameTeam(entityIn);
+        return super.isTeammate(entityIn);
     }
 
     /**
@@ -297,8 +300,8 @@ public class TameableMonsterEntity extends CreatureEntity {
      */
     @Override
     public void onDeath(DamageSource cause) {
-        if (!this.world.isRemote && this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES) && this.getOwner() instanceof ServerPlayerEntity) {
-            this.getOwner().sendMessage(this.getCombatTracker().getDeathMessage());
+        if (!this.world.isClient && this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES) && this.getOwner() instanceof ServerPlayerEntity) {
+            this.getOwner().sendMessage(this.getDamageTracker().getDeathMessage());
         }
 
         super.onDeath(cause);
@@ -308,12 +311,12 @@ public class TameableMonsterEntity extends CreatureEntity {
     * Called when the entity is attacked.
     */
     @Override
-    public boolean attackEntityFrom(DamageSource source, float amount) {
-       return !this.isInvulnerableTo(source) && super.attackEntityFrom(source, amount);
+    public boolean damage(DamageSource source, float amount) {
+       return !this.isInvulnerableTo(source) && super.damage(source, amount);
     }
 
     @Override
-    protected boolean canDropLoot() {
+    protected boolean canDropLootAndXp() {
         return true;
     }
 

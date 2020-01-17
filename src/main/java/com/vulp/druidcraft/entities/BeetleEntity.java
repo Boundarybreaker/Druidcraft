@@ -1,140 +1,141 @@
 package com.vulp.druidcraft.entities;
 
+import com.vulp.druidcraft.Druidcraft;
 import com.vulp.druidcraft.entities.AI.goals.NonTamedTargetGoalMonster;
 import com.vulp.druidcraft.entities.AI.goals.OwnerHurtByTargetGoalMonster;
 import com.vulp.druidcraft.entities.AI.goals.OwnerHurtTargetGoalMonster;
 import com.vulp.druidcraft.events.EventFactory;
 import com.vulp.druidcraft.inventory.container.BeetleInventoryContainer;
 import com.vulp.druidcraft.registry.ItemRegistry;
+import net.fabricmc.fabric.api.container.ContainerProviderRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.container.Container;
+import net.minecraft.container.NameableContainerProvider;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.entity.monster.MonsterEntity;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.CreeperEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.horse.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.IInventoryChangedListener;
+import net.minecraft.inventory.BasicInventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.container.Container;
-import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.inventory.InventoryListener;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.network.NetworkHooks;
-import net.minecraftforge.items.wrapper.InvWrapper;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class BeetleEntity extends TameableMonsterEntity implements IInventoryChangedListener, INamedContainerProvider {
-    private static final DataParameter<Boolean> SADDLE = EntityDataManager.createKey(BeetleEntity.class, DataSerializers.BOOLEAN);
-    private static final DataParameter<Boolean> CHEST = EntityDataManager.createKey(BeetleEntity.class, DataSerializers.BOOLEAN);
-    private Inventory beetleChest;
-    private LazyOptional<?> itemHandler = null;
+public class BeetleEntity extends TameableMonsterEntity implements InventoryListener, NameableContainerProvider {
+    private static final TrackedData<Boolean> SADDLE = DataTracker.registerData(BeetleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> CHEST = DataTracker.registerData(BeetleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private BasicInventory beetleChest;
 
     public BeetleEntity(EntityType<? extends BeetleEntity> type, World worldIn) {
         super(type, worldIn);
-        this.experienceValue = 10;
+        this.experiencePoints = 10;
         this.initBeetleChest();
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
-        this.dataManager.register(SADDLE, false);
-        this.dataManager.register(CHEST, false);
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(SADDLE, false);
+        this.dataTracker.startTracking(CHEST, false);
     }
 
     @Override
-    protected void registerGoals() {
-        this.goalSelector.addGoal(1, new SwimGoal(this));
-        this.goalSelector.addGoal(3, new LeapAtTargetGoal(this, 0.2F));
-        this.goalSelector.addGoal(4, new AttackGoal(this));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomWalkingGoal(this, 1.0D));
-        this.goalSelector.addGoal(6, new LookAtGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.addGoal(6, new LookRandomlyGoal(this));
-        this.targetSelector.addGoal(1, new OwnerHurtByTargetGoalMonster(this));
-        this.targetSelector.addGoal(2, new OwnerHurtTargetGoalMonster(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(4, new NonTamedTargetGoalMonster<>(this, PlayerEntity.class, false, null));
-        this.targetSelector.addGoal(5, new NonTamedTargetGoalMonster<>(this, IronGolemEntity.class, false));
+    protected void initGoals() {
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(3, new PounceAtTargetGoal(this, 0.2F));
+        this.goalSelector.add(4, new AttackGoal(this));
+        this.goalSelector.add(5, new WanderAroundFarGoal(this, 1.0D));
+        this.goalSelector.add(6, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.add(6, new LookAroundGoal(this));
+        this.targetSelector.add(1, new OwnerHurtByTargetGoalMonster(this));
+        this.targetSelector.add(2, new OwnerHurtTargetGoalMonster(this));
+        this.targetSelector.add(3, new RevengeGoal(this));
+        this.targetSelector.add(4, new NonTamedTargetGoalMonster<>(this, PlayerEntity.class, false, null));
+        this.targetSelector.add(5, new NonTamedTargetGoalMonster<>(this, IronGolemEntity.class, false));
     }
 
 
     @Override
-    protected void registerAttributes() {
-        super.registerAttributes();
-        this.getAttribute(SharedMonsterAttributes.ARMOR).setBaseValue(20.0d);
-        this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(40.0d);
-        this.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(0.5d);
-        this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.15d);
-        this.getAttribute(SharedMonsterAttributes.ATTACK_KNOCKBACK).setBaseValue(1.5d);
-        this.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(3.0d);
+    protected void initAttributes() {
+        super.initAttributes();
+        this.getAttributeInstance(EntityAttributes.ARMOR).setBaseValue(20.0d);
+        this.getAttributeInstance(EntityAttributes.MAX_HEALTH).setBaseValue(40.0d);
+        this.getAttributeInstance(EntityAttributes.KNOCKBACK_RESISTANCE).setBaseValue(0.5d);
+        this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED).setBaseValue(0.15d);
+        this.getAttributeInstance(EntityAttributes.ATTACK_KNOCKBACK).setBaseValue(1.5d);
+        this.getAttributeInstance(EntityAttributes.ATTACK_DAMAGE).setBaseValue(3.0d);
     }
 
-    public static boolean placement(EntityType<?> type, IWorld worldIn, SpawnReason reason, BlockPos pos, Random randomIn) {
+    public static boolean placement(EntityType<?> type, IWorld worldIn, SpawnType reason, BlockPos pos, Random randomIn) {
         Block block = worldIn.getBlockState(pos.down()).getBlock();
-        if (worldIn.getLight(pos) >= 8 && randomIn.nextInt(5) == 0) {
+        if (worldIn.getLuminance(pos) >= 8 && randomIn.nextInt(5) == 0) {
             return false;
         }
         return worldIn.getDifficulty() != Difficulty.PEACEFUL && block == Blocks.GRASS_BLOCK;
     }
 
     public boolean hasSaddle() {
-        return this.dataManager.get(SADDLE);
+        return this.dataTracker.get(SADDLE);
     }
 
     private void setSaddled(boolean saddled) {
-        this.dataManager.set(SADDLE, saddled);
+        this.dataTracker.set(SADDLE, saddled);
     }
 
     public boolean hasChest() {
-        return this.dataManager.get(CHEST);
+        return this.dataTracker.get(CHEST);
     }
 
     private void setChested(boolean chested) {
-        this.dataManager.set(CHEST, chested);
+        this.dataTracker.set(CHEST, chested);
     }
 
     @Override
-    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn) {
-        return 0.8F;
+    public float getEyeHeight(EntityPose pose) {
+        return 0.8f;
     }
 
     @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
+    public void writeCustomDataToTag(CompoundTag compound) {
+        super.writeCustomDataToTag(compound);
         compound.putBoolean("saddled", this.hasSaddle());
         compound.putBoolean("chested", this.hasChest());
         if (this.hasChest()) {
-            ListNBT listnbt = new ListNBT();
+            ListTag listnbt = new ListTag();
 
-            for (int i = 2; i < this.beetleChest.getSizeInventory(); ++i) {
-                ItemStack itemstack = this.beetleChest.getStackInSlot(i);
+            for (int i = 2; i < this.beetleChest.getInvSize(); ++i) {
+                ItemStack itemstack = this.beetleChest.getInvStack(i);
                 if (!itemstack.isEmpty()) {
-                    CompoundNBT compoundnbt = new CompoundNBT();
+                    CompoundTag compoundnbt = new CompoundTag();
                     compoundnbt.putByte("Slot", (byte) i);
-                    itemstack.write(compoundnbt);
+                    itemstack.toTag(compoundnbt);
                     listnbt.add(compoundnbt);
                 }
             }
@@ -142,33 +143,33 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
             compound.put("Items", listnbt);
         }
 
-        if (!this.beetleChest.getStackInSlot(0).isEmpty()) {
-            compound.put("SaddleItem", this.beetleChest.getStackInSlot(0).write(new CompoundNBT()));
+        if (!this.beetleChest.getInvStack(0).isEmpty()) {
+            compound.put("SaddleItem", this.beetleChest.getInvStack(0).toTag(new CompoundTag()));
         }
     }
 
     @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
+    public void readCustomDataFromTag(CompoundTag compound) {
+        super.readCustomDataFromTag(compound);
         this.setSaddled(compound.getBoolean("saddled"));
         this.setChested(compound.getBoolean("chested"));
         if (this.hasChest()) {
-            ListNBT listnbt = compound.getList("Items", 10);
+            ListTag listnbt = compound.getList("Items", 10);
             this.initBeetleChest();
 
             for (int i = 0; i < listnbt.size(); ++i) {
-                CompoundNBT compoundnbt = listnbt.getCompound(i);
+                CompoundTag compoundnbt = listnbt.getCompound(i);
                 int j = compoundnbt.getByte("Slot") & 255;
-                if (j >= 2 && j < this.beetleChest.getSizeInventory()) {
-                    this.beetleChest.setInventorySlotContents(j, ItemStack.read(compoundnbt));
+                if (j >= 2 && j < this.beetleChest.getInvSize()) {
+                    this.beetleChest.setInvStack(j, ItemStack.fromTag(compoundnbt));
                 }
             }
         }
 
         if (compound.contains("SaddleItem", 10)) {
-            ItemStack itemstack = ItemStack.read(compound.getCompound("SaddleItem"));
+            ItemStack itemstack = ItemStack.fromTag(compound.getCompound("SaddleItem"));
             if (itemstack.getItem() == Items.SADDLE) {
-                this.beetleChest.setInventorySlotContents(0, itemstack);
+                this.beetleChest.setInvStack(0, itemstack);
             }
         }
 
@@ -176,12 +177,12 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
     }
 
     @Override
-    public CreatureAttribute getCreatureAttribute() {
-        return CreatureAttribute.ARTHROPOD;
+    public EntityGroup getGroup() {
+        return EntityGroup.ARTHROPOD;
     }
 
     @Override
-    public boolean replaceItemInInventory(int inventorySlot, ItemStack itemStackIn) {
+    public boolean equip(int inventorySlot, ItemStack itemStackIn) {
         if (inventorySlot == 499) {
             if (this.hasChest() && itemStackIn.isEmpty()) {
                 this.setChested(false);
@@ -196,7 +197,7 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
             }
         }
 
-        return super.replaceItemInInventory(inventorySlot, itemStackIn);
+        return super.equip(inventorySlot, itemStackIn);
     }
 
     private int getInventorySize() {
@@ -226,9 +227,9 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
                 }
             }
 
-            if (target instanceof PlayerEntity && owner instanceof PlayerEntity && !((PlayerEntity) owner).canAttackPlayer((PlayerEntity) target)) {
+            if (target instanceof PlayerEntity && owner instanceof PlayerEntity && !owner.canTarget(target)) {
                 return false;
-            } else if (target instanceof AbstractHorseEntity && ((AbstractHorseEntity) target).isTame()) {
+            } else if (target instanceof HorseBaseEntity && ((HorseBaseEntity) target).isTame()) {
                 return false;
             } else {
                 return !(target instanceof CatEntity) || !((CatEntity) target).isTamed();
@@ -239,23 +240,23 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
     }
 
     private void updateBeetleSlots() {
-        if (!this.world.isRemote) {
-            this.setSaddled(!this.beetleChest.getStackInSlot(0).isEmpty() && this.canBeSaddled());
+        if (!this.world.isClient) {
+            this.setSaddled(!this.beetleChest.getInvStack(0).isEmpty() && this.canBeSaddled());
         }
     }
 
     @Override
-    public boolean processInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getHeldItem(hand);
+    public boolean interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemstack = player.getStackInHand(hand);
         Item item = itemstack.getItem();
         if (this.isTamed() && player.isSneaking()) {
             this.openGUI(player);
             return true;
         }
         if (!itemstack.isEmpty()) {
-            if (item == Items.APPLE && this.getHealth() < this.getMaxHealth()) {
-                if (!player.abilities.isCreativeMode) {
-                    itemstack.shrink(1);
+            if (item == Items.APPLE && this.getHealth() < this.getMaximumHealth()) {
+                if (!player.abilities.creativeMode) {
+                    itemstack.decrement(1);
                 }
 
                 this.heal(8f);
@@ -263,38 +264,38 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
             }
             if (!this.isTamed() || itemstack.getItem() == Items.NAME_TAG) {
                 if (itemstack.getItem() == Items.GOLDEN_APPLE) {
-                    if (!player.abilities.isCreativeMode) {
-                        itemstack.shrink(1);
+                    if (!player.abilities.creativeMode) {
+                        itemstack.decrement(1);
                     }
 
-                    if (!this.world.isRemote) {
-                        if (this.rand.nextInt(3) == 0 && !EventFactory.onMonsterTame(this, player)) {
+                    if (!this.world.isClient) {
+                        if (this.random.nextInt(3) == 0 && !EventFactory.onMonsterTame(this, player)) {
                             this.playTameEffect(true);
                             this.setTamedBy(player);
-                            this.navigator.clearPath();
-                            this.setAttackTarget(null);
+                            this.navigation.stop();
+                            this.setTarget(null);
                             this.setHealth(32.0F);
-                            this.world.setEntityState(this, (byte) 7);
+                            this.world.sendEntityStatus(this, (byte) 7);
                         } else {
                             this.playTameEffect(false);
-                            this.world.setEntityState(this, (byte) 6);
+                            this.world.sendEntityStatus(this, (byte) 6);
                         }
                     }
 
                     return true;
                 }
 
-                if (itemstack.interactWithEntity(player, this, hand)) {
+                if (itemstack.useOnEntity(player, this, hand)) {
                     return true;
                 }
             } else if (this.isTamed()) {
-                if (!this.world.isRemote) {
+                if (!this.world.isClient) {
                     if (!this.hasChest() && itemstack.getItem() == Items.CHEST) {
                         this.setChested(true);
                         this.playChestEquipSound();
                         this.initBeetleChest();
                         if (!player.isCreative()) {
-                            itemstack.shrink(1);
+                            itemstack.decrement(1);
                         }
                         return true;
                     }
@@ -306,33 +307,33 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
                 }
             }
         } else {
-              if (!this.world.isRemote) {
-                  if (this.hasSaddle() && !this.isBeingRidden()) {
+              if (!this.world.isClient) {
+                  if (this.hasSaddle() && !this.hasPassengers()) {
                       this.mountTo(player);
                       return true;
                   }
               }
         }
-        return super.processInteract(player, hand);
+        return super.interactMob(player, hand);
     }
 
    private void mountTo(PlayerEntity player) {
-      if (!this.world.isRemote) {
-         player.rotationYaw = this.rotationYaw;
-         player.rotationPitch = this.rotationPitch;
-         player.startRiding(this);
-      }
-    }
+       if (!this.world.isClient) {
+           player.yaw = this.yaw;
+           player.pitch = this.pitch;
+           player.startRiding(this);
+       }
+   }
 
-    @Override
-    public void updatePassenger(Entity passenger) {
-        super.updatePassenger(passenger);
-        if (passenger instanceof MobEntity) {
-            MobEntity mobentity = (MobEntity)passenger;
-            this.renderYawOffset = mobentity.renderYawOffset;
-            passenger.setPosition(this.posX, this.posY + this.getMountedYOffset() + passenger.getYOffset(), this.posZ);
-        }
-    }
+   @Override
+   public void addPassenger(Entity passenger) {
+       super.addPassenger(passenger);
+       if (passenger instanceof MobEntity) {
+           MobEntity mobentity = (MobEntity)passenger;
+           this.bodyYaw = mobentity.bodyYaw;
+           passenger.setPosition(this.getPos().x, this.getPos().y + this.getMountedHeightOffset() + passenger.getHeightOffset(), this.getPos().z);
+       }
+   }
 
     @Nullable
     @Override
@@ -341,119 +342,111 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
     }
 
     private void openGUI(PlayerEntity playerEntity) {
-        if (!this.world.isRemote && (!this.isBeingRidden() || this.isPassenger(playerEntity)) && this.isTamed()) {
-            NetworkHooks.openGui((ServerPlayerEntity) playerEntity, this, packetBuffer -> {
-                packetBuffer.writeInt(this.getEntityId());
-                packetBuffer.writeInt(getInventorySize());
+        if (!this.world.isClient && (!this.hasPassengers() || this.hasPassenger(playerEntity)) && this.isTamed()) {
+            ContainerProviderRegistry.INSTANCE.openContainer(new Identifier(Druidcraft.MODID, "beetle_inv"), playerEntity, packetByteBuf -> {
+                packetByteBuf.writeInt(this.getEntityId());
+                packetByteBuf.writeInt(this.getInventorySize());
             });
         }
     }
 
     private void initBeetleChest() {
-        Inventory inventory = this.beetleChest;
-        this.beetleChest = new Inventory(this.getInventorySize());
+        BasicInventory inventory = this.beetleChest;
+        this.beetleChest = new BasicInventory(this.getInventorySize());
         if (inventory != null) {
             inventory.removeListener(this);
-            int i = Math.min(inventory.getSizeInventory(), this.beetleChest.getSizeInventory());
+            int i = Math.min(inventory.getInvSize(), this.beetleChest.getInvSize());
 
             for (int j = 0; j < i; ++j) {
-                ItemStack itemstack = inventory.getStackInSlot(j);
+                ItemStack itemstack = inventory.getInvStack(j);
                 if (!itemstack.isEmpty()) {
-                    this.beetleChest.setInventorySlotContents(j, itemstack.copy());
+                    this.beetleChest.setInvStack(j, itemstack.copy());
                 }
             }
         }
 
         this.beetleChest.addListener(this);
         this.updateBeetleSlots();
-        this.itemHandler = LazyOptional.of(() -> new InvWrapper(this.beetleChest));
     }
 
     private void playChestEquipSound() {
-        this.playSound(SoundEvents.ENTITY_DONKEY_CHEST, 1.0F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+        this.playSound(SoundEvents.ENTITY_DONKEY_CHEST, 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
     }
 
     @Override
     protected void dropInventory() {
         super.dropInventory();
-        if (!this.world.isRemote) {
+        if (!this.world.isClient) {
             if (isTamed()) {
                 if (this.hasChest()) {
-                    this.entityDropItem(Blocks.CHEST);
+                    this.dropItem(Blocks.CHEST);
                     this.setChested(false);
-                    for (int i = 0; i < this.beetleChest.getSizeInventory(); ++i) {
-                        ItemStack itemstack = this.beetleChest.getStackInSlot(i);
+                    for (int i = 0; i < this.beetleChest.getInvSize(); ++i) {
+                        ItemStack itemstack = this.beetleChest.getInvStack(i);
                         if (!itemstack.isEmpty()) {
-                            this.entityDropItem(itemstack);
+                            this.dropStack(itemstack);
                         }
                     }
                 }
 
                 if (this.hasSaddle()) {
-                    this.entityDropItem(Items.SADDLE);
+                    this.dropItem(Items.SADDLE);
                     this.setSaddled(false);
                 }
             } else {
-                int j = this.rand.nextInt(2);
+                int j = this.random.nextInt(2);
                 for (int k = 0; k <= j; ++k) {
-                    this.entityDropItem(ItemRegistry.chitin);
+                    this.dropItem(ItemRegistry.chitin);
                 }
             }
         }
     }
 
     @Override
-    public void onInventoryChanged(IInventory invBasic) {
+    public void onInvChange(Inventory invBasic) {
         boolean flag = this.hasSaddle();
         this.updateBeetleSlots();
-        if (this.ticksExisted > 20 && !flag && this.hasSaddle()) {
+        if (this.age > 20 && !flag && this.hasSaddle()) {
             this.playSound(SoundEvents.ENTITY_HORSE_SADDLE, 0.5F, 1.0F);
         }
     }
 
     @Override
-    public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.Direction facing) {
-        if (this.isAlive() && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY && itemHandler != null)
-            return itemHandler.cast();
-        return super.getCapability(capability, facing);
+    public boolean canBeControlledByRider() {
+        return this.getPrimaryPassenger() instanceof LivingEntity;
     }
 
     @Override
-    public boolean canBeSteered() {
-        return this.getControllingPassenger() instanceof LivingEntity;
-    }
-
-    @Override
-    public double getMountedYOffset() {
+    public double getMountedHeightOffset() {
         return (this.getHeight() - 0.15d);
     }
 
     @Override
     @Nullable
-    public Entity getControllingPassenger() {
-        return this.getPassengers().isEmpty() ? null : this.getPassengers().get(0);
+    public Entity getPrimaryPassenger() {
+        return this.getPassengerList().isEmpty() ? null : this.getPassengerList().get(0);
     }
 
     @Override
     public void travel(Vec3d vec) {
         if (this.isAlive()) {
-            if (this.isBeingRidden() && this.canBeSteered() && this.hasSaddle()) {
-                LivingEntity livingentity = (LivingEntity) this.getControllingPassenger();
-                this.rotationYaw = livingentity.rotationYaw;
-                this.prevRotationYaw = this.rotationYaw;
-                this.rotationPitch = livingentity.rotationPitch * 0.5F;
-                this.setRotation(this.rotationYaw, this.rotationPitch);
-                this.renderYawOffset = this.rotationYaw;
-                this.rotationYawHead = this.renderYawOffset;
+            if (this.hasPassengers() && this.canBeControlledByRider() && this.hasSaddle()) {
+                LivingEntity livingentity = (LivingEntity) this.getPrimaryPassenger();
+                this.yaw = livingentity.yaw;
+                this.prevYaw = this.yaw;
+                this.pitch = livingentity.pitch * 0.5F;
+                this.setRotation(this.yaw, this.pitch);
+                this.bodyYaw = this.yaw;
+                this.headYaw = this.bodyYaw;
                 this.stepHeight = 1.0F;
-                float f = livingentity.moveStrafing * 0.5F;
-                float f1 = livingentity.moveForward * 1F;
+                float f = livingentity.sidewaysSpeed * 0.5F;
+                float f1 = livingentity.forwardSpeed * 1F;
 
-                if (this.canPassengerSteer()) {
-                    this.setAIMoveSpeed((float)this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue());
+                if (this.canBeControlledByRider()) {
+                    this.setMovementSpeed((float)this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED).getValue());
                     super.travel(new Vec3d((double)f, vec.y, (double)f1));
                 } else if (livingentity instanceof PlayerEntity) {
-                    this.setMotion(Vec3d.ZERO);
+                    this.setVelocity(Vec3d.ZERO);
                 }
             } else {
                 this.stepHeight = 0.5F;
@@ -468,8 +461,8 @@ public class BeetleEntity extends TameableMonsterEntity implements IInventoryCha
         }
 
         @Override
-        protected double getAttackReachSqr(LivingEntity attackTarget) {
-            return (double)(4.0F + attackTarget.getWidth());
+        protected double getSquaredMaxAttackDistance(LivingEntity attackTarget) {
+            return 4.0F + attackTarget.getWidth();
         }
     }
 }

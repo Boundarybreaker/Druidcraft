@@ -1,8 +1,8 @@
 package com.vulp.druidcraft.registry;
 
 import com.vulp.druidcraft.Druidcraft;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
 
 public class SoundEventRegistry {
 
@@ -11,8 +11,7 @@ public class SoundEventRegistry {
     public static SoundEvent close_crate = setupSoundEvent("close_crate");
 
     private static SoundEvent setupSoundEvent(String name) {
-        SoundEvent soundEvent = new SoundEvent(new ResourceLocation(Druidcraft.MODID, name));
-        soundEvent.setRegistryName(new ResourceLocation(Druidcraft.MODID, name));
+        SoundEvent soundEvent = new SoundEvent(new Identifier(Druidcraft.MODID, name));
         return soundEvent;
     }
 }

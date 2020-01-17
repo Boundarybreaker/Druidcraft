@@ -5,16 +5,17 @@ import com.vulp.druidcraft.registry.BlockRegistry;
 import net.minecraft.block.*;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MutableBoundingBox;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldWriter;
+import net.minecraft.world.ModifiableTestableWorld;
 import net.minecraft.world.gen.ChunkGenerator;
 import net.minecraft.world.gen.GenerationSettings;
 import net.minecraft.world.gen.IWorldGenerationBaseReader;
 import net.minecraft.world.gen.IWorldGenerationReader;
-import net.minecraft.world.gen.feature.AbstractTreeFeature;
-import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraftforge.common.IPlantable;
 
@@ -22,19 +23,19 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 
-public class ElderTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
+public class ElderTreeFeature extends AbstractTreeFeature<BranchedTreeFeatureConfig> {
 
     private static final BlockState TRUNK = BlockRegistry.elder_log.getDefaultState();
     private static final BlockState BASE = BlockRegistry.elder_wood.getDefaultState();
     private static final BlockState LEAF = BlockRegistry.elder_leaves.getDefaultState();
 
-    public ElderTreeFeature(Function<Dynamic<?>, ? extends NoFeatureConfig> config, boolean doBlockNotifyOnPlace) {
-        super(config, doBlockNotifyOnPlace);
-        this.setSapling((IPlantable)BlockRegistry.elder_sapling);
+    public ElderTreeFeature(Function<Dynamic<?>, ? extends BranchedTreeFeatureConfig> config) {
+        super(config);
+//        this.setSapling((IPlantable)BlockRegistry.elder_sapling);
     }
 
     @Override
-    protected boolean place(Set<BlockPos> changedBlocks, IWorldGenerationReader worldIn, Random rand, BlockPos position, MutableBoundingBox boundsIn) {
+    protected boolean generate(ModifiableTestableWorld worldIn, Random rand, BlockPos position, Set<BlockPos> set, Set<BlockPos> changedBlocks, BlockBox boundsIn, BranchedTreeFeatureConfig config) {
 
         int height = rand.nextInt(2) + 6;
         boolean canGrow = true;
@@ -51,12 +52,12 @@ public class ElderTreeFeature extends AbstractTreeFeature<NoFeatureConfig> {
                     k = 2;
                 }
 
-                BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+                BlockPos.Mutable blockpos$mutableblockpos = new BlockPos.Mutable();
 
                 for (int cx = position.getX() - k; cx <= position.getX() + k && canGrow; ++cx) {
                     for (int cz = position.getZ() - k; cz <= position.getZ() + k && canGrow; ++cz) {
                         if (cy >= 0 && cy < 256) {
-                            if (!func_214587_a(worldIn, blockpos$mutableblockpos.setPos(cx, cy, cz))) {
+                            if (!func_214587_a(worldIn, blockpos$mutableblockpos.set(cx, cy, cz))) {
                                 canGrow = false;
                             }
                         } else {

@@ -17,18 +17,28 @@ import com.vulp.druidcraft.registry.*;
 import com.vulp.druidcraft.world.biomes.DarkwoodForest;
 import com.vulp.druidcraft.world.features.BerryBushFeature;
 import com.vulp.druidcraft.world.features.ElderTreeFeature;
+import net.fabricmc.fabric.api.biomes.v1.FabricBiomes;
+import net.fabricmc.fabric.api.biomes.v1.OverworldBiomes;
+import net.fabricmc.fabric.api.biomes.v1.OverworldClimate;
 import net.fabricmc.fabric.api.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.container.ContainerFactory;
+import net.fabricmc.fabric.api.container.ContainerProviderRegistry;
 import net.fabricmc.fabric.api.tools.FabricToolTags;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.container.Container;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
 import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.gen.feature.NoFeatureConfig;
-import net.minecraftforge.common.*;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.Biomes;
+import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -191,8 +201,8 @@ public class DruidcraftRegistry {
         BlockRegistry.moonstone_ore = register(new OreBlock(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 3).build(), 6, 14), "moonstone_ore");
         BlockRegistry.fiery_glass_ore = register(new OreBlock(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 2).build(), 4, 10), "fiery_glass_ore");
         BlockRegistry.rockroot_ore = register(new OreBlock(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 0).build(), 2, 10), "rockroot_ore");
-        BlockRegistry.amber_block = register(new BeaconBaseBlock(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 1).sounds(BlockSoundGroup.STONE).build()), "amber_block");
-        BlockRegistry.moonstone_block = register(new BeaconBaseBlock(FabricBlockSettings.of(Material.STONE).strength(6.0f, 6.0f).breakByTool(FabricToolTags.PICKAXES, 2).sounds(BlockSoundGroup.STONE).build()), "moonstone_block");
+        BlockRegistry.amber_block = register(new Block(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 1).sounds(BlockSoundGroup.STONE).build()), "amber_block");
+        BlockRegistry.moonstone_block = register(new Block(FabricBlockSettings.of(Material.STONE).strength(6.0f, 6.0f).breakByTool(FabricToolTags.PICKAXES, 2).sounds(BlockSoundGroup.STONE).build()), "moonstone_block");
         BlockRegistry.fiery_glass_block = register(new Block(FabricBlockSettings.of(Material.STONE).strength(4.0f, 4.0f).breakByTool(FabricToolTags.PICKAXES, 2).sounds(BlockSoundGroup.STONE).build()), "fiery_glass_block");
         BlockRegistry.rockroot_block = register(new Block(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 0).sounds(BlockSoundGroup.STONE).build()), "rockroot_block");
         BlockRegistry.darkwood_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.of(Material.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "darkwood_log");
@@ -249,11 +259,11 @@ public class DruidcraftRegistry {
         BlockRegistry.crate_temp = register(new CrateTempBlock(FabricBlockSettings.of(Material.WOOD).sounds(BlockSoundGroup.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).build()), "crate");
         BlockRegistry.ceramic_lantern = register(new RopeableLanternBlock(FabricBlockSettings.of(Material.STONE).sounds(BlockSoundGroup.STONE).strength(2.0f, 2.0f).lightLevel(13).breakByTool(FabricToolTags.PICKAXES).build()), "ceramic_lantern");
         BlockRegistry.turquoise_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly().build(), 1), "turquoise_lunar_moth_lantern");
-//                        BlockRegistry.white_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "white_lunar_moth_lantern");
-//                        BlockRegistry.lime_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "lime_lunar_moth_lantern");
-//                        BlockRegistry.yellow_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "yellow_lunar_moth_lantern");
-//                        BlockRegistry.orange_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "orange_lunar_moth_lantern");
-//                        BlockRegistry.pink_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "pink_lunar_moth_lantern");
+//        BlockRegistry.white_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "white_lunar_moth_lantern");
+//        BlockRegistry.lime_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "lime_lunar_moth_lantern");
+//        BlockRegistry.yellow_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "yellow_lunar_moth_lantern");
+//        BlockRegistry.orange_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "orange_lunar_moth_lantern");
+//        BlockRegistry.pink_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly(), 1), "pink_lunar_moth_lantern");
 
 
         BlockRegistry.black_soulfire = register(new SoulfireBlock(DyeColor.BLACK, FabricBlockSettings.of(Material.FIRE).sounds(BlockSoundGroup.SNOW).strength(0.0f, 0.0f).noCollision().lightLevel(13).build()), "black_soulfire");
@@ -276,29 +286,13 @@ public class DruidcraftRegistry {
 
         LOGGER.info("Blocks registered.");
     }
-    
-    private static void forEach(Object... objects) {
-        //TODO: currently a kludge to replace registerAll, move to a better system
-    }
-    
-    public static Item register(Item item, String name) {
-        return register(item, new Identifier(Druidcraft.MODID, name));
-    }
-    
-    public static Block register(Block block, String name) {
-        return Registry.register(Registry.BLOCK, new Identifier(Druidcraft.MODID, name), block);
-    }
-    
-    public static Item register(Item item, Identifier id) {
-        return Registry.register(Registry.ITEM, id, item);
-    }
 
     // SOUND REGISTRATION
     public static void onSoundRegistry()
     {
-        register(SoundEventRegistry.fill_bottle);
-        register(SoundEventRegistry.open_crate);
-        register(SoundEventRegistry.close_crate);
+        register(SoundEventRegistry.fill_bottle, "fill_bottle");
+        register(SoundEventRegistry.open_crate, "open_crate");
+        register(SoundEventRegistry.close_crate, "close_crate");
 
         LOGGER.info("Sound events registered.");
     }
@@ -306,9 +300,9 @@ public class DruidcraftRegistry {
     // ENTITY REGISTRATION
     public static void onEntityRegistry()
     {
-        register(EntityRegistry.dreadfish_entity);
-        register(EntityRegistry.beetle_entity);
-        register(EntityRegistry.lunar_moth_entity);
+        register(EntityRegistry.dreadfish_entity, "dreadfish");
+        register(EntityRegistry.beetle_entity, "beetle");
+        register(EntityRegistry.lunar_moth_entity, "lunar_moth");
 
         EntityRegistry.registerEntityWorldSpawns();
         LOGGER.info("Entities registered.");
@@ -339,7 +333,7 @@ public class DruidcraftRegistry {
     public static void onContainerRegistry()
     {
         //TODO: container reg
-        register(GUIRegistry.beetle_inv);
+        register(GUIRegistry.beetle_inv_factory, "beetle_inv");
 
         LOGGER.info("GUI registered.");
     }
@@ -357,8 +351,8 @@ public class DruidcraftRegistry {
     public static void onFeatureRegistry()
     {
 
-        FeatureRegistry.elder_tree = FeatureRegistry.register(new ElderTreeFeature(NoFeatureConfig::deserialize, true), "elder_tree");
-        FeatureRegistry.blueberry_bush = FeatureRegistry.register(new BerryBushFeature(NoFeatureConfig::deserialize, BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)), "blueberry_bush");
+        FeatureRegistry.elder_tree = FeatureRegistry.register(new ElderTreeFeature(BranchedTreeFeatureConfig::deserialize2), "elder_tree");
+        FeatureRegistry.blueberry_bush = FeatureRegistry.register(new BerryBushFeature(DefaultFeatureConfig::deserialize, BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)), "blueberry_bush");
 
         FeatureRegistry.spawnFeatures();
         LOGGER.info("Features registered.");
@@ -368,9 +362,40 @@ public class DruidcraftRegistry {
     public static void onBiomeRegistry()
     {
         //TODO: biome stuff
-        BiomeRegistry.darkwood_forest = BiomeRegistry.registerBiome(new DarkwoodForest(), "darkwood_forest", 6, false, BiomeManager.BiomeType.COOL, BiomeDictionary.Type.CONIFEROUS);
+        BiomeRegistry.darkwood_forest = register(new DarkwoodForest(), "darkwood_forest");
+
+        OverworldBiomes.addContinentalBiome(BiomeRegistry.darkwood_forest, OverworldClimate.COOL, 1);
+        OverworldBiomes.addBiomeVariant(Biomes.GIANT_SPRUCE_TAIGA, BiomeRegistry.darkwood_forest, 0.06, OverworldClimate.COOL);
 
         LOGGER.info("Biomes registered.");
+    }
+
+    public static Item register(Item item, String name) {
+        return register(item, new Identifier(Druidcraft.MODID, name));
+    }
+
+    public static Item register(Item item, Identifier id) {
+        return Registry.register(Registry.ITEM, id, item);
+    }
+
+    public static Block register(Block block, String name) {
+        return Registry.register(Registry.BLOCK, new Identifier(Druidcraft.MODID, name), block);
+    }
+
+    public static SoundEvent register(SoundEvent event, String name) {
+        return Registry.register(Registry.SOUND_EVENT, new Identifier(Druidcraft.MODID, name), event);
+    }
+
+    public static EntityType register(EntityType entity, String name) {
+        return Registry.register(Registry.ENTITY_TYPE, new Identifier(Druidcraft.MODID, name), entity);
+    }
+
+    public static Biome register(Biome biome, String name) {
+        return Registry.register(Registry.BIOME, new Identifier(Druidcraft.MODID, name), biome);
+    }
+
+    public static void register(ContainerFactory<Container> factory, String name) {
+        ContainerProviderRegistry.INSTANCE.registerFactory(new Identifier(Druidcraft.MODID, name), factory);
     }
 
 }

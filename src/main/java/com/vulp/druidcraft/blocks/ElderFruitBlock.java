@@ -1,49 +1,32 @@
 package com.vulp.druidcraft.blocks;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.sun.scenario.effect.Crop;
 import com.vulp.druidcraft.api.CropLifeStageType;
-import com.vulp.druidcraft.registry.BlockRegistry;
 import com.vulp.druidcraft.registry.ItemRegistry;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.Fertilizable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityContext;
-import net.minecraft.entity.monster.RavagerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.entity.mob.RavagerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.*;
-import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.*;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.WorldInfo;
-import net.minecraft.world.storage.WorldSummary;
-import net.minecraftforge.server.permission.context.WorldContext;
+import net.minecraft.world.WorldView;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 import java.util.Random;
-
 
 public class ElderFruitBlock extends CropBlock implements Fertilizable {
 
@@ -124,17 +107,17 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
         return null;
     }
 
-    @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        super.onBlockHarvested(worldIn, pos, state, player);
-        if (state.get(AGE) == getMaxAge()) {
-            if (state.get(LIFE_STAGE) == CropLifeStageType.FLOWER) {
-                spawnAsEntity(worldIn, pos, new ItemStack(ItemRegistry.elderflower, 1 + worldIn.rand.nextInt(1)));
-            } else if (state.get(LIFE_STAGE) == CropLifeStageType.BERRY && !state.get(MID_BERRY)) {
-                spawnAsEntity(worldIn, pos, new ItemStack(ItemRegistry.elderberries, 1 + worldIn.rand.nextInt(2)));
-            }
-        }
-    }
+//    @Override //TODO: loot table
+//    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
+//        super.onBlockHarvested(worldIn, pos, state, player);
+//        if (state.get(AGE) == getMaxAge()) {
+//            if (state.get(LIFE_STAGE) == CropLifeStageType.FLOWER) {
+//                dropStack(worldIn, pos, new ItemStack(ItemRegistry.elderflower, 1 + worldIn.rand.nextInt(1)));
+//            } else if (state.get(LIFE_STAGE) == CropLifeStageType.BERRY && !state.get(MID_BERRY)) {
+//                dropStack(worldIn, pos, new ItemStack(ItemRegistry.elderberries, 1 + worldIn.rand.nextInt(2)));
+//            }
+//        }
+//    }
 
     @Override
     public IntProperty getAgeProperty() {
@@ -164,26 +147,18 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
     }
 
     @Override
-    public void tick(BlockState state, World worldIn, BlockPos pos, Random random) {
-        if (!worldIn.isAreaLoaded(pos, 1) && state.get(LIFE_STAGE) == CropLifeStageType.NONE) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
-        if (worldIn.getLightSubtracted(pos, 0) >= 9 && isGrowable(worldIn, pos)) {
+    public void scheduledTick(BlockState state, ServerWorld worldIn, BlockPos pos, Random random) {
+        if (!worldIn.isChunkLoaded(pos) && state.get(LIFE_STAGE) == CropLifeStageType.NONE) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+        if (worldIn.getLightLevel(pos, 0) >= 9 && isGrowable(worldIn, pos)) {
             int i = this.getAge(state);
             float f = getGrowthChance(this, worldIn, pos);
             if (i < this.getMaxAge()) {
-                if (net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, random.nextInt((int)(25.0F / f) + 1) == 0)) {
-                    BlockState lastState = state.getBlockState();
-                    worldIn.setBlockState(pos, lastState.with(AGE, state.get(AGE) + 1));
-                    net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state);
-                }
+                worldIn.setBlockState(pos, state.with(AGE, state.get(AGE) + 1));
             } else if ((CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.BERRY) && state.get(LIFE_STAGE) != CropLifeStageType.BERRY || state.get(MID_BERRY)) {
-                if (net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, random.nextInt((int)(25.0F / f) + 1) == 0) && i == this.getMaxAge()) {
-                    BlockState lastState = state.getBlockState();
-                    if (state.get(LIFE_STAGE) == CropLifeStageType.BERRY && state.get(MID_BERRY)) {
-                        worldIn.setBlockState(pos, lastState.with(MID_BERRY, false));
-                    } else if (lastState.get(LIFE_STAGE) != CropLifeStageType.BERRY) {
-                        worldIn.setBlockState(pos, lastState.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
-                    }
-                    net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state);
+                if (state.get(LIFE_STAGE) == CropLifeStageType.BERRY && state.get(MID_BERRY)) {
+                    worldIn.setBlockState(pos, state.with(MID_BERRY, false));
+                } else if (state.get(LIFE_STAGE) != CropLifeStageType.BERRY) {
+                    worldIn.setBlockState(pos, state.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
                 }
             }
         }
@@ -203,32 +178,26 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
     }
 
     @Override
-    public void grow(World worldIn, BlockPos pos, BlockState state) {
+    public void applyGrowth(World worldIn, BlockPos pos, BlockState state) {
         if (isGrowable(worldIn, pos)) {
-            BlockState lastState = state.getBlockState();
-            if (CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.BERRY && lastState.get(LIFE_STAGE) != CropLifeStageType.BERRY && isMature(lastState)) {
-                worldIn.setBlockState(pos, lastState.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
-            } else if (worldIn.getBlockState(pos).get(MID_BERRY) && isMature(lastState)) {
-                worldIn.setBlockState(pos, lastState.with(MID_BERRY, false).with(LIFE_STAGE, CropLifeStageType.BERRY));
+            if (CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.BERRY && state.get(LIFE_STAGE) != CropLifeStageType.BERRY && isMature(state)) {
+                worldIn.setBlockState(pos, state.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
+            } else if (worldIn.getBlockState(pos).get(MID_BERRY) && isMature(state)) {
+                worldIn.setBlockState(pos, state.with(MID_BERRY, false).with(LIFE_STAGE, CropLifeStageType.BERRY));
             } else {
-                int i = this.getAge(state) + this.getBonemealAgeIncrease(worldIn);
+                int i = this.getAge(state) + this.getGrowthAmount(worldIn);
                 int j = this.getMaxAge();
                 if (i > j) {
                     i = j;
                 }
 
-                worldIn.setBlockState(pos, lastState.with(AGE, i));
+                worldIn.setBlockState(pos, state.with(AGE, i));
             }
         }
     }
 
     @Override
-    public boolean ticksRandomly(BlockState state) {
-        return true;
-    }
-
-    @Override
-    protected int getBonemealAgeIncrease(World worldIn) {
+    protected int getGrowthAmount(World worldIn) {
         return 1;
     }
 
@@ -240,25 +209,25 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
         else return f/1.2F;
     }
 
-    public static Boolean isOnLeaves(IWorldReader world, BlockPos pos) {
+    public static Boolean isOnLeaves(WorldView world, BlockPos pos) {
         Direction direction = world.getBlockState(pos).get(FACING).getOpposite();
         return world.getBlockState(pos.offset(direction.getOpposite())).getBlock() instanceof ElderLeavesBlock;
     }
 
     @Override
-    protected boolean isValidGround(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    protected boolean canPlantOnTop(BlockState state, BlockView worldIn, BlockPos pos) {
         return true;
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader worldIn, BlockPos pos) {
+    public boolean canPlaceAt(BlockState state, WorldView worldIn, BlockPos pos) {
         return isOnLeaves(worldIn, pos);
     }
 
     @Override
     public void onEntityCollision(BlockState state, World worldIn, BlockPos pos, Entity entityIn) {
-        if (entityIn instanceof RavagerEntity && net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(worldIn, entityIn)) {
-            worldIn.destroyBlock(pos, true);
+        if (entityIn instanceof RavagerEntity && worldIn.getGameRules().getBoolean(GameRules.MOB_GRIEFING)) {
+            worldIn.breakBlock(pos, true);
         }
 
         super.onEntityCollision(state, worldIn, pos, entityIn);
@@ -268,22 +237,22 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
      * Whether this IGrowable can grow
      */
     @Override
-    public boolean canGrow(IBlockReader worldIn, BlockPos pos, BlockState state, boolean isClient) {
-        return !this.isMaxAge(state) && isGrowable((World) worldIn, pos);
+    public boolean isFertilizable(BlockView worldIn, BlockPos pos, BlockState state, boolean isClient) {
+        return !this.isMature(state) && isGrowable((World) worldIn, pos);
     }
 
     @Override
-    public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, BlockState state) {
+    public boolean canGrow(World worldIn, Random rand, BlockPos pos, BlockState state) {
         return isGrowable(worldIn, pos);
     }
 
     @Override
-    public void grow(World worldIn, Random rand, BlockPos pos, BlockState state) {
-        this.grow(worldIn, pos, state);
+    public void grow(ServerWorld worldIn, Random rand, BlockPos pos, BlockState state) {
+        this.applyGrowth(worldIn, pos, state);
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(AGE, FACING, LIFE_STAGE, MID_BERRY);
     }
 
