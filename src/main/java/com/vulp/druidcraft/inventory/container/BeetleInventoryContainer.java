@@ -13,12 +13,12 @@ public class BeetleInventoryContainer extends Container {
     private Inventory beetleInventory;
     private BeetleEntity beetle;
 
-    public BeetleInventoryContainer(int windowID, PlayerInventory playerInventory, Inventory inventory, int id) {
+    public BeetleInventoryContainer(int windowID, PlayerInventory playerInventory, int id) {
         super(null, windowID);
-        this.beetleInventory = inventory;
         this.beetle = (BeetleEntity) playerInventory.player.world.getEntityById(id);
-        inventory.onInvOpen(playerInventory.player);
-        this.addSlot(new Slot(inventory, 0, 18, 72) {
+        this.beetleInventory = beetle.getInventory();
+        beetleInventory.onInvOpen(playerInventory.player);
+        this.addSlot(new Slot(beetleInventory, 0, 18, 72) {
             @Override
             public boolean canInsert(ItemStack stack) {
                 return stack.getItem() == Items.SADDLE && !this.hasStack();
@@ -35,7 +35,7 @@ public class BeetleInventoryContainer extends Container {
         if (beetle instanceof BeetleEntity && beetle.hasChest()) {
             for(j1 = 0; j1 < 7; ++j1) {
                 for(k1 = 0; k1 < 9; ++k1) {
-                    this.addSlot(new Slot(inventory, 2 + k1 + j1 * 9, 85 + (k1 * 18), 18 + (j1 * 18)));
+                    this.addSlot(new Slot(beetleInventory, 2 + k1 + j1 * 9, 85 + (k1 * 18), 18 + (j1 * 18)));
                 }
             }
         }

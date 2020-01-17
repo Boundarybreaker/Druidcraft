@@ -1,32 +1,32 @@
 package com.vulp.druidcraft.particle;
 
 import com.mojang.blaze3d.platform.GlStateManager;
-import net.minecraft.client.particle.IParticleRenderType;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.particle.ParticleTextureSheet;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.texture.TextureManager;
 import org.lwjgl.opengl.GL11;
 
-public interface ICustomParticleRender extends IParticleRenderType {
+//TODO: what should I do in Blaze3D?
+public interface ICustomParticleRender extends ParticleTextureSheet {
 
     ICustomParticleRender PARTICLE_SHEET_TRANSLUCENT_GLOW = new ICustomParticleRender() {
         @Override
-        public void beginRender(BufferBuilder buffer, TextureManager textureManager) {
-            RenderHelper.disableStandardItemLighting();
+        public void begin(BufferBuilder buffer, TextureManager textureManager) {
+//            RenderHelper.disableStandardItemLighting();
             GlStateManager.enableAlphaTest();
             GlStateManager.enableBlend();
             GlStateManager.depthMask(false);
-            textureManager.bindTexture(AtlasTexture.LOCATION_PARTICLES_TEXTURE);
-            GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+            textureManager.bindTexture(SpriteAtlasTexture.PARTICLE_ATLAS_TEX);
+            GlStateManager.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA.value, GlStateManager.DstFactor.ONE.value);
             GlStateManager.alphaFunc(516, 0.003921569F);
             GlStateManager.disableCull();
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
+            buffer.begin(GL11.GL_QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
         }
         @Override
-        public void finishRender(Tessellator tess) {
+        public void draw(Tessellator tess) {
             tess.draw();
         }
         public String toString() {
@@ -36,16 +36,16 @@ public interface ICustomParticleRender extends IParticleRenderType {
 
     ICustomParticleRender CUSTOM = new ICustomParticleRender() {
         @Override
-        public void beginRender(BufferBuilder p_217600_1_, TextureManager p_217600_2_) {
-            RenderHelper.disableStandardItemLighting();
+        public void begin(BufferBuilder p_217600_1_, TextureManager p_217600_2_) {
+//            RenderHelper.disableStandardItemLighting();
             GlStateManager.disableBlend();
             GlStateManager.depthMask(true);
-            p_217600_2_.bindTexture(AtlasTexture.LOCATION_PARTICLES_TEXTURE);
-            p_217600_1_.begin(7, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
+            p_217600_2_.bindTexture(SpriteAtlasTexture.PARTICLE_ATLAS_TEX);
+            p_217600_1_.begin(7, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
         }
 
         @Override
-        public void finishRender(Tessellator p_217599_1_) {
+        public void draw(Tessellator p_217599_1_) {
             p_217599_1_.draw();
         }
 

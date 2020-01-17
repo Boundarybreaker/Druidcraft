@@ -1,37 +1,28 @@
 package com.vulp.druidcraft.blocks;
 
-import com.vulp.druidcraft.api.IKnifeable;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockPlacementEnvironment;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Waterloggable;
 import net.minecraft.entity.EntityContext;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.fluid.IFluidState;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemUseContext;
-import net.minecraft.pathfinding.PathType;
-import net.minecraft.state.*;
-import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
-import javax.annotation.Nullable;
-
-public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiquidContainer {
+public class SmallBeamBlock extends Block implements Waterloggable {
 
     public static final BooleanProperty X_AXIS = BooleanProperty.of("x_axis");
     public static final BooleanProperty Y_AXIS = BooleanProperty.of("y_axis");
@@ -76,13 +67,13 @@ public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiqu
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        IFluidState ifluidstate = context.getWorld().getFluidState(context.getPos());
-        return this.calculateState(getDefaultState(), context.getWorld(), context.getPos(), context.getFace().getAxis()).with(WATERLOGGED, ifluidstate.getFluid() == Fluids.WATER);
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        FluidState ifluidstate = context.getWorld().getFluidState(context.getBlockPos());
+        return this.calculateState(getDefaultState(), context.getWorld(), context.getBlockPos(), context.getPlayerLookDirection().getAxis()).with(WATERLOGGED, ifluidstate.getFluid() == Fluids.WATER);
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
+    public boolean isTranslucent(BlockState state, BlockView reader, BlockPos pos) {
         return !state.get(WATERLOGGED);
     }
 
@@ -146,11 +137,11 @@ public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiqu
 
 
     @Override
-    public boolean receiveFluid(IWorld worldIn, BlockPos pos, BlockState state, IFluidState fluidState) {
+    public boolean tryFillWithFluid(IWorld worldIn, BlockPos pos, BlockState state, FluidState fluidState) {
         if (!state.get(WATERLOGGED) && fluidState.getFluid() == Fluids.WATER) {
-            if (!worldIn.isRemote()) {
+            if (!worldIn.isClient()) {
                 worldIn.setBlockState(pos, state.with(WATERLOGGED, Boolean.valueOf(true)), 3);
-                worldIn.getPendingFluidTicks().scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+                worldIn.getFluidTickScheduler().schedule(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
             }
             return true;
         } else {
@@ -159,7 +150,7 @@ public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiqu
     }
 
     @Override
-    public Fluid pickupFluid(IWorld worldIn, BlockPos pos, BlockState state) {
+    public Fluid tryDrainFluid(IWorld worldIn, BlockPos pos, BlockState state) {
         if (state.get(WATERLOGGED)) {
             worldIn.setBlockState(pos, state.with(WATERLOGGED, Boolean.valueOf(false)), 3);
             return Fluids.WATER;
@@ -170,27 +161,27 @@ public class SmallBeamBlock extends Block implements IBucketPickupHandler, ILiqu
 
     @Override
     @SuppressWarnings("deprecation")
-    public IFluidState getFluidState(BlockState state) {
-        return state.get(WATERLOGGED) ? Fluids.WATER.getStillFluidState(false) : super.getFluidState(state);
+    public FluidState getFluidState(BlockState state) {
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     @Override
-    public boolean canContainFluid(IBlockReader worldIn, BlockPos pos, BlockState state, Fluid fluid) {
+    public boolean canFillWithFluid(BlockView worldIn, BlockPos pos, BlockState state, Fluid fluid) {
         return !state.get(WATERLOGGED) && fluid == Fluids.WATER;
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState getStateForNeighborUpdate(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
 
         if (state.get(WATERLOGGED)) {
-            world.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(world));
+            world.getFluidTickScheduler().schedule(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(world));
         }
 
         return calculateState(state, (World) world, currentPos, state.get(DEFAULT_AXIS));
     }
 
     @Override
-    public boolean allowsMovement(BlockState state, IBlockReader worldIn, BlockPos pos, PathType type) {
+    public boolean canPlaceAtSide(BlockState state, BlockView worldIn, BlockPos pos, BlockPlacementEnvironment type) {
         return false;
     }
 }

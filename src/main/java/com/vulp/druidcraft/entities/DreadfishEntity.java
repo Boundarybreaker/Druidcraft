@@ -1,28 +1,35 @@
 package com.vulp.druidcraft.entities;
 
 import com.vulp.druidcraft.entities.AI.goals.*;
-import com.vulp.druidcraft.events.EventFactory;
+import com.vulp.druidcraft.events.TameMonsterCallback;
 import com.vulp.druidcraft.pathfinding.FlyingFishPathNavigator;
 import com.vulp.druidcraft.registry.ParticleRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
-import net.minecraft.entity.ai.controller.MovementController;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.monster.CreeperEntity;
+import net.minecraft.entity.ai.control.MoveControl;
+import net.minecraft.entity.ai.goal.LookAtEntityGoal;
+import net.minecraft.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.entity.ai.goal.RevengeGoal;
+import net.minecraft.entity.ai.pathing.EntityNavigation;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.CreeperEntity;
 import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.passive.IronGolemEntity;
 import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.passive.horse.AbstractHorseEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
-import net.minecraft.item.*;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.pathfinding.PathNavigator;
-import net.minecraft.util.DamageSource;
+import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.item.DyeItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -42,7 +49,7 @@ import java.util.function.Predicate;
 public class DreadfishEntity extends TameableFlyingMonsterEntity
 {
     private static final Predicate<LivingEntity> isPlayer;
-    private static final DataParameter<Integer> SMOKE_COLOR = EntityDataManager.createKey(DreadfishEntity.class, DataSerializers.VARINT);
+    private static final TrackedData<Integer> SMOKE_COLOR = DataTracker.registerData(DreadfishEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final Map<DyeColor, int[]> DYE_COLOR_MAP = new HashMap<>();
     private FlyingFishPathNavigator navigator;
     private DyeColor smokeColor = null;
@@ -66,100 +73,101 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
         DYE_COLOR_MAP.put(DyeColor.WHITE, new int[]{215, 215, 215});
     }
 
-    public DreadfishEntity(EntityType<? extends TameableFlyingMonsterEntity> type, World worldIn)
+    public DreadfishEntity(EntityType<? extends DreadfishEntity> type, World worldIn)
     {
         super(type, worldIn);
-        this.navigator = (FlyingFishPathNavigator) this.createNavigator(worldIn);
+        this.navigator = (FlyingFishPathNavigator) this.createNavigation(worldIn);
         this.setTamed(false);
-        this.moveController = new DreadfishEntity.MoveHelperController(this);
+        this.moveControl = new DreadfishEntity.MoveHelperController(this);
     }
 
     @Override
-    protected void registerGoals()
+    protected void initGoals()
     {
-        super.registerGoals();
+        super.initGoals();
         this.sitGoal = new SitGoalMonster(this);
-        this.goalSelector.addGoal(1, this.sitGoal);
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 3.0, true));
-        this.goalSelector.addGoal(3, new LookAtGoal(this, PlayerEntity.class, 8.0F));
-        this.goalSelector.addGoal(4, new FollowOwnerGoalMonster(this, 5.0D, 10.0F, 2.0F));
-        this.goalSelector.addGoal(5, new DreadfishEntity.SwimGoal(this));
+        this.goalSelector.add(1, this.sitGoal);
+        this.goalSelector.add(2, new MeleeAttackGoal(this, 3.0, true));
+        this.goalSelector.add(3, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
+        this.goalSelector.add(4, new FollowOwnerGoalMonster(this, 5.0D, 10.0F, 2.0F));
+        this.goalSelector.add(5, new DreadfishEntity.SwimGoal(this));
 
-        this.targetSelector.addGoal(1, new OwnerHurtByTargetGoalMonster(this));
-        this.targetSelector.addGoal(2, new OwnerHurtTargetGoalMonster(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(4, new NonTamedTargetGoalMonster(this, PlayerEntity.class, false, isPlayer));
-        this.targetSelector.addGoal(5, new NonTamedTargetGoalMonster(this, IronGolemEntity.class, false));
+        this.targetSelector.add(1, new OwnerHurtByTargetGoalMonster(this));
+        this.targetSelector.add(2, new OwnerHurtTargetGoalMonster(this));
+        this.targetSelector.add(3, new RevengeGoal(this));
+        this.targetSelector.add(4, new NonTamedTargetGoalMonster(this, PlayerEntity.class, false, isPlayer));
+        this.targetSelector.add(5, new NonTamedTargetGoalMonster(this, IronGolemEntity.class, false));
     }
 
     @Override
-    protected void registerAttributes()
+    protected void initAttributes()
     {
-        super.registerAttributes();
-        this.getAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(0.975d);
+        super.initAttributes();
+        this.getAttributeInstance(EntityAttributes.KNOCKBACK_RESISTANCE).setBaseValue(0.975d);
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
-        this.dataManager.register(SMOKE_COLOR, DyeColor.PURPLE.getId());
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(SMOKE_COLOR, DyeColor.PURPLE.getId());
     }
 
-    public static boolean placement(EntityType<?> type, IWorld worldIn, SpawnReason reason, BlockPos pos, Random randomIn) {
+    public static boolean placement(EntityType<?> type, IWorld worldIn, SpawnType reason, BlockPos pos, Random randomomIn) {
         Block block = worldIn.getBlockState(pos.down()).getBlock();
-        return worldIn.getDifficulty() != Difficulty.PEACEFUL && isValidLightLevel(worldIn, pos, randomIn);
+        return worldIn.getDifficulty() != Difficulty.PEACEFUL && isValidLightLevel(worldIn, pos, randomomIn);
     }
 
     @Override
-    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn) {
+    protected float getActiveEyeHeight(EntityPose poseIn, EntityDimensions sizeIn) {
         return 0.2F;
     }
 
     @Override
-    public void fall(float distance, float damageMultiplier) {
+    public boolean handleFallDamage(float distance, float damageMultiplier) {
+        return false;
     }
 
-    private static boolean isValidLightLevel(IWorld world, BlockPos pos, Random rand) {
-        if (world.getLightFor(LightType.SKY, pos) > rand.nextInt(32)) {
+    private static boolean isValidLightLevel(IWorld world, BlockPos pos, Random random) {
+        if (world.getLightLevel(LightType.SKY, pos) > random.nextInt(32)) {
             return false;
         } else {
-            int i = world.getWorld().isThundering() ? world.getNeighborAwareLightSubtracted(pos, 10) : world.getLight(pos);
-            return i <= rand.nextInt(8);
+            int i = world.getWorld().isThundering() ? world.getLightLevel(pos, 10) : world.getLuminance(pos);
+            return i <= random.nextInt(8);
         }
     }
 
     @Override
-    protected void updateFallState(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
+    protected void fall(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
     }
 
     @Override
-    public boolean attackEntityFrom(DamageSource source, float amount) {
+    public boolean damage(DamageSource source, float amount) {
         if (this.isInvulnerableTo(source)) {
             return false;
         } else {
-            Entity entity = source.getTrueSource();
+            Entity entity = source.getSource();
             if (this.sitGoal != null) {
                 this.sitGoal.setSitting(false);
             }
 
-            if (entity != null && !(entity instanceof PlayerEntity) && !(entity instanceof AbstractArrowEntity)) {
+            if (entity != null && !(entity instanceof PlayerEntity) && !(entity instanceof ProjectileEntity)) {
                 amount = (amount + 1.0F) / 2.0F;
             }
 
-            return super.attackEntityFrom(source, amount);
+            return super.damage(source, amount);
         }
     }
 
     @Override
-    public void writeAdditional(CompoundNBT compound) {
-        super.writeAdditional(compound);
+    public void writeCustomDataToTag(CompoundTag compound) {
+        super.writeCustomDataToTag(compound);
         compound.putBoolean("Hostile", this.isHostile());
         compound.putByte("SmokeColor", (byte)this.getSmokeColor().getId());
     }
 
     @Override
-    public void readAdditional(CompoundNBT compound) {
-        super.readAdditional(compound);
+    public void readCustomDataFromTag(CompoundTag compound) {
+        super.readCustomDataFromTag(compound);
         this.setHostile(compound.getBoolean("Hostile"));
         if (compound.contains("SmokeColor", 99)) {
             this.setSmokeColor(DyeColor.byId(compound.getInt("SmokeColor")));
@@ -172,21 +180,21 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
     }
 
     @Override
-    public CreatureAttribute getCreatureAttribute() {
-        return CreatureAttribute.UNDEAD;
+    public EntityGroup getGroup() {
+        return EntityGroup.UNDEAD;
     }
 
     @Override
-    protected PathNavigator createNavigator(World worldIn) {
+    protected EntityNavigation createNavigation(World worldIn) {
         return new FlyingFishPathNavigator(this, worldIn);
     }
 
     @Override
     public void travel(Vec3d relative) {
-        if (this.isServerWorld()) {
-            this.moveRelative(0.01F, relative);
-            this.move(MoverType.SELF, this.getMotion());
-            this.setMotion(this.getMotion().scale(0.9D));
+        if (!this.world.isClient) {
+            this.updateVelocity(0.01F, relative);
+            this.move(MovementType.SELF, this.getVelocity());
+            this.setVelocity(this.getVelocity().multiply(0.9D));
         } else {
             super.travel(relative);
         }
@@ -205,13 +213,13 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
         }
 
         @Override
-        public boolean shouldExecute() {
-            return this.dreadfishEntity.execute() && super.shouldExecute();
+        public boolean canStart() {
+            return this.dreadfishEntity.execute() && super.canStart();
         }
     }
 
 
-    static class MoveHelperController extends MovementController {
+    static class MoveHelperController extends MoveControl {
         private final DreadfishEntity dreadfishEntity;
 
         MoveHelperController(DreadfishEntity dreadfishEntity) {
@@ -222,22 +230,22 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
         @Override
         public void tick() {
 
-            this.dreadfishEntity.setMotion(this.dreadfishEntity.getMotion().add(0.0D, 0.0D, 0.0D));
+            this.dreadfishEntity.setVelocity(this.dreadfishEntity.getVelocity().add(0.0D, 0.0D, 0.0D));
 
-            if (this.action == Action.MOVE_TO && !this.dreadfishEntity.getNavigator().noPath()) {
-                double d0 = this.posX - this.dreadfishEntity.posX;
-                double d1 = this.posY - this.dreadfishEntity.posY;
-                double d2 = this.posZ - this.dreadfishEntity.posZ;
-                double d3 = (double) MathHelper.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
+            if (this.state == State.MOVE_TO && !this.dreadfishEntity.getNavigation().isIdle()) {
+                double d0 = this.targetX - this.dreadfishEntity.getPos().x;
+                double d1 = this.targetY - this.dreadfishEntity.getPos().y;
+                double d2 = this.targetZ - this.dreadfishEntity.getPos().z;
+                double d3 = MathHelper.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
                 d1 /= d3;
                 float f = (float)(MathHelper.atan2(d2, d0) * 57.2957763671875D) - 90.0F;
-                this.dreadfishEntity.rotationYaw = this.limitAngle(this.dreadfishEntity.rotationYaw, f, 90.0F);
-                this.dreadfishEntity.renderYawOffset = this.dreadfishEntity.rotationYaw;
-                float f1 = (float)(this.speed * this.dreadfishEntity.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getValue());
-                this.dreadfishEntity.setAIMoveSpeed(MathHelper.lerp(1.5F, this.dreadfishEntity.getAIMoveSpeed(), f1));
-                this.dreadfishEntity.setMotion(this.dreadfishEntity.getMotion().add(0.0D, (double)this.dreadfishEntity.getAIMoveSpeed() * d1 * 0.01D, 0.0D));
+                this.dreadfishEntity.yaw = this.changeAngle(this.dreadfishEntity.yaw, f, 90.0F);
+                this.dreadfishEntity.bodyYaw = this.dreadfishEntity.yaw;
+                float f1 = (float)(this.speed * this.dreadfishEntity.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED).getValue());
+                this.dreadfishEntity.setMovementSpeed(MathHelper.lerp(1.5F, this.dreadfishEntity.getMovementSpeed(), f1));
+                this.dreadfishEntity.setVelocity(this.dreadfishEntity.getVelocity().add(0.0D, (double)this.dreadfishEntity.getMovementSpeed() * d1 * 0.01D, 0.0D));
             } else {
-                this.dreadfishEntity.setAIMoveSpeed(0.0F);
+                this.dreadfishEntity.setMovementSpeed(0.0F);
             }
         }
     }
@@ -246,17 +254,17 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
     public void setTamed(boolean tamed) {
         super.setTamed(tamed);
         if (tamed) {
-            this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(24.0D);
+            this.getAttributeInstance(EntityAttributes.MAX_HEALTH).setBaseValue(24.0D);
         } else {
-            this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(16.0D);
+            this.getAttributeInstance(EntityAttributes.MAX_HEALTH).setBaseValue(16.0D);
         }
 
-        this.getAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(4.0D);
+        this.getAttributeInstance(EntityAttributes.ATTACK_DAMAGE).setBaseValue(4.0D);
     }
 
     @Override
-    public void setAttackTarget(@Nullable LivingEntity entitylivingbaseIn) {
-        super.setAttackTarget(entitylivingbaseIn);
+    public void setTarget(@Nullable LivingEntity entitylivingbaseIn) {
+        super.setTarget(entitylivingbaseIn);
         if (entitylivingbaseIn == null) {
             this.setHostile(false);
         } else if (!this.isTamed()) {
@@ -271,25 +279,25 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
 
     public DyeColor getSmokeColor() {
         if (smokeColor == null) {
-            smokeColor = DyeColor.byId(this.dataManager.get(SMOKE_COLOR));
+            smokeColor = DyeColor.byId(this.dataTracker.get(SMOKE_COLOR));
         }
         return smokeColor;
     }
 
     public void setSmokeColor(DyeColor smokeColor) {
-        this.dataManager.set(SMOKE_COLOR, smokeColor.getId());
+        this.dataTracker.set(SMOKE_COLOR, smokeColor.getId());
         this.smokeColor = smokeColor;
     }
 
     @Override
-    public boolean processInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getHeldItem(hand);
+    public boolean interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemstack = player.getStackInHand(hand);
         Item item = itemstack.getItem();
         if (this.isTamed()) {
             if (!itemstack.isEmpty()) {
-                if (item == Items.BONE && this.getHealth() < this.getMaxHealth()) {
-                    if (!player.abilities.isCreativeMode) {
-                        itemstack.shrink(1);
+                if (item == Items.BONE && this.getHealth() < this.getMaximumHealth()) {
+                    if (!player.abilities.creativeMode) {
+                        itemstack.decrement(1);
                     }
 
                     this.heal(4f);
@@ -297,48 +305,48 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
                 }
 
                 else if (item instanceof DyeItem) {
-                    DyeColor dyecolor = ((DyeItem) item).getDyeColor();
+                    DyeColor dyecolor = ((DyeItem) item).getColor();
                     if (dyecolor != this.getSmokeColor()) {
                         this.setSmokeColor(dyecolor);
-                        if (!player.abilities.isCreativeMode) {
-                            itemstack.shrink(1);
+                        if (!player.abilities.creativeMode) {
+                            itemstack.decrement(1);
                         }
 
                         return true;
                     }
                 }
             }
-            if (this.isOwner(player) && !this.world.isRemote && !(item == Items.BONE && item instanceof DyeItem)) {
+            if (this.isOwner(player) && !this.world.isClient && !(item == Items.BONE && item instanceof DyeItem)) {
                 this.sitGoal.setSitting(!this.isSitting());
-                this.isJumping = false;
-                this.navigator.clearPath();
-                this.setAttackTarget(null);
+                this.jumping = false;
+                this.navigator.stop();
+                this.setTarget(null);
             }
         }
         else if (item == Items.PRISMARINE_CRYSTALS) {
-            if (!player.abilities.isCreativeMode) {
-                itemstack.shrink(1);
+            if (!player.abilities.creativeMode) {
+                itemstack.decrement(1);
             }
 
-            if (!this.world.isRemote) {
-                if (this.rand.nextInt(3) == 0 && !EventFactory.onMonsterTame(this, player)) {
+            if (!this.world.isClient) {
+                if (this.random.nextInt(3) == 0 && TameMonsterCallback.EVENT.invoker().onTameMonster(this, player).isAccepted()) {
                     this.playTameEffect(true);
                     this.setTamedBy(player);
-                    this.navigator.clearPath();
-                    this.setAttackTarget(null);
+                    this.navigator.stop();
+                    this.setTarget(null);
                     this.sitGoal.setSitting(true);
                     this.setHealth(24.0F);
-                    this.world.setEntityState(this, (byte)7);
+                    this.world.sendEntityStatus(this, (byte)7);
                 } else {
                     this.playTameEffect(false);
-                    this.world.setEntityState(this, (byte)6);
+                    this.world.sendEntityStatus(this, (byte)6);
                 }
             }
 
             return true;
         }
 
-        return super.processInteract(player, hand);
+        return super.interactMob(player, hand);
     }
 
     @Override
@@ -358,9 +366,9 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
                 }
             }
 
-            if (target instanceof PlayerEntity && owner instanceof PlayerEntity && !((PlayerEntity) owner).canAttackPlayer((PlayerEntity) target)) {
+            if (target instanceof PlayerEntity && owner instanceof PlayerEntity && !owner.canTarget(target)) {
                 return false;
-            } else if (target instanceof AbstractHorseEntity && ((AbstractHorseEntity) target).isTame()) {
+            } else if (target instanceof HorseBaseEntity && ((HorseBaseEntity) target).isTame()) {
                 return false;
             } else {
                 return !(target instanceof CatEntity) || !((CatEntity) target).isTamed();
@@ -371,7 +379,7 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
     }
 
     @Override
-    public boolean canBeLeashedTo(PlayerEntity player) {
+    public boolean canBeLeashedBy(PlayerEntity player) {
         return !this.isHostile() && !this.isTamed();
     }
 
@@ -383,35 +391,35 @@ public class DreadfishEntity extends TameableFlyingMonsterEntity
     }
 
     public boolean isHostile() {
-        return (this.dataManager.get(TAMED) & 2) != 0;
+        return (this.dataTracker.get(TAMED) & 2) != 0;
     }
 
     public void setHostile(boolean hostile) {
-        byte b0 = this.dataManager.get(TAMED);
+        byte b0 = this.dataTracker.get(TAMED);
         if (hostile) {
-            this.dataManager.set(TAMED, (byte)(b0 | 2));
+            this.dataTracker.set(TAMED, (byte)(b0 | 2));
         } else {
-            this.dataManager.set(TAMED, (byte)(b0 & -3));
+            this.dataTracker.set(TAMED, (byte)(b0 & -3));
         }
 
     }
 
     @Override
-    public void livingTick() {
-        super.livingTick();
-        if (this.world.isRemote) {
+    public void tickMovement() {
+        super.tickMovement();
+        if (this.world.isClient) {
             int[] color = getSmokeColorArray();
 
-            world.addParticle(ParticleRegistry.magic_smoke, false, this.posX, this.posY + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.posZ + (((rand.nextDouble() - 0.5) + 0.2) / 3), color[0] / 255.f, color[1] / 255.f, color[2] / 255.f);
+            world.addParticle(ParticleRegistry.magic_smoke, false, this.getPos().x, this.getPos().y + (((random.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().z + (((random.nextDouble() - 0.5) + 0.2) / 3), color[0] / 255.f, color[1] / 255.f, color[2] / 255.f);
         }
 
-        if (!this.world.isRemote && this.getAttackTarget() == null && this.isHostile()) {
+        if (!this.world.isClient && this.getTarget() == null && this.isHostile()) {
             this.setHostile(false);
         }
     }
 
     @Override
-    public boolean isOnLadder() {
+    public boolean isClimbing() {
         return false;
     }
 }

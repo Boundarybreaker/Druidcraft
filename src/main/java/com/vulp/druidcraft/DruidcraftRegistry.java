@@ -17,7 +17,6 @@ import com.vulp.druidcraft.registry.*;
 import com.vulp.druidcraft.world.biomes.DarkwoodForest;
 import com.vulp.druidcraft.world.features.BerryBushFeature;
 import com.vulp.druidcraft.world.features.ElderTreeFeature;
-import net.fabricmc.fabric.api.biomes.v1.FabricBiomes;
 import net.fabricmc.fabric.api.biomes.v1.OverworldBiomes;
 import net.fabricmc.fabric.api.biomes.v1.OverworldClimate;
 import net.fabricmc.fabric.api.block.FabricBlockSettings;
@@ -27,6 +26,7 @@ import net.fabricmc.fabric.api.tools.FabricToolTags;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.container.Container;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
@@ -311,12 +311,7 @@ public class DruidcraftRegistry {
     // PARTICLE REGISTRATION
     public static void onParticleRegistry()
     {
-        //TODO: particle reg
-        register(ParticleRegistry.magic_smoke, "magic_smoke");
-        register(ParticleRegistry.fiery_glow, "fiery_glow");
-        register(ParticleRegistry.fiery_spark, "fiery_spark");
-        register(ParticleRegistry.magic_mist, "magic_mist");
-        register(ParticleRegistry.magic_glitter, "magic_glitter");
+        ParticleRegistry.registerFactories();
 
         LOGGER.info("Particles registered.");
     }
@@ -333,7 +328,7 @@ public class DruidcraftRegistry {
     public static void onContainerRegistry()
     {
         //TODO: container reg
-        register(GUIRegistry.beetle_inv_factory, "beetle_inv");
+        register(GUIRegistry.beetle_inv, "beetle_inv");
 
         LOGGER.info("GUI registered.");
     }
@@ -342,7 +337,7 @@ public class DruidcraftRegistry {
     public static void onTileEntityRegistry()
     {
         TileEntityRegistry.crate = TileEntityRegistry.register("crate", BlockEntityType.Builder.create(CrateTileEntity::new, BlockRegistry.crate_temp));
-        TileEntityRegistry.lunar_moth_jar = TileEntityRegistry.register("lunar_moth_jar", BlockEntityType.Builder.create(LunarMothJarTileEntity::new, BlockRegistry.turquoise_lunar_moth_jar /*, BlockRegistry.yellow_lunar_moth_jar, BlockRegistry.white_lunar_moth_jar, BlockRegistry.pink_lunar_moth_jar, BlockRegistry.orange_lunar_moth_jar, BlockRegistry.lime_lunar_moth_jar*/))
+        TileEntityRegistry.lunar_moth_jar = TileEntityRegistry.register("lunar_moth_jar", BlockEntityType.Builder.create(LunarMothJarTileEntity::new, BlockRegistry.turquoise_lunar_moth_jar /*, BlockRegistry.yellow_lunar_moth_jar, BlockRegistry.white_lunar_moth_jar, BlockRegistry.pink_lunar_moth_jar, BlockRegistry.orange_lunar_moth_jar, BlockRegistry.lime_lunar_moth_jar*/));
 
         LOGGER.info("Tile Entities registered.");
     }
@@ -396,6 +391,10 @@ public class DruidcraftRegistry {
 
     public static void register(ContainerFactory<Container> factory, String name) {
         ContainerProviderRegistry.INSTANCE.registerFactory(new Identifier(Druidcraft.MODID, name), factory);
+    }
+
+    public static <T extends Entity> EntityType<T> reister(EntityType<T> entity, String name) {
+        return Registry.register(Registry.ENTITY_TYPE, new Identifier(Druidcraft.MODID, name), entity);
     }
 
 }

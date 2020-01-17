@@ -2,6 +2,8 @@ package com.vulp.druidcraft.entities;
 
 import com.vulp.druidcraft.advancements.Advancements;
 import com.vulp.druidcraft.entities.AI.goals.SitGoalMonster;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -164,17 +166,17 @@ public abstract class TameableMonsterEntity extends MobEntityWithAi {
     }
 
     /**
-     * Handler for {@link World#setEntityState}
+     * Handler for {@link World#sendEntityStatus(Entity, byte)}
      */
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public void handleStatusUpdate(byte id) {
+    @Environment(EnvType.CLIENT)
+    public void handleStatus(byte id) {
         if (id == 7) {
             this.playTameEffect(true);
         } else if (id == 6) {
             this.playTameEffect(false);
         } else {
-            super.handleStatusUpdate(id);
+            super.handleStatus(id);
         }
 
     }

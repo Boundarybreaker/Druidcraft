@@ -153,12 +153,18 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
             int i = this.getAge(state);
             float f = getGrowthChance(this, worldIn, pos);
             if (i < this.getMaxAge()) {
-                worldIn.setBlockState(pos, state.with(AGE, state.get(AGE) + 1));
+                if (random.nextInt((int)(25.0F / f) + 1) == 0) {
+                    worldIn.setBlockState(pos, state.with(AGE, state.get(AGE) + 1));
+                }
             } else if ((CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.BERRY) && state.get(LIFE_STAGE) != CropLifeStageType.BERRY || state.get(MID_BERRY)) {
                 if (state.get(LIFE_STAGE) == CropLifeStageType.BERRY && state.get(MID_BERRY)) {
-                    worldIn.setBlockState(pos, state.with(MID_BERRY, false));
+                    if (random.nextInt((int)(25.0F / f) + 1) == 0) {
+                        worldIn.setBlockState(pos, state.with(MID_BERRY, false));
+                    }
                 } else if (state.get(LIFE_STAGE) != CropLifeStageType.BERRY) {
-                    worldIn.setBlockState(pos, state.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
+                    if (random.nextInt((int)(25.0F / f) + 1) == 0) {
+                        worldIn.setBlockState(pos, state.with(MID_BERRY, true).with(LIFE_STAGE, CropLifeStageType.BERRY));
+                    }
                 }
             }
         }

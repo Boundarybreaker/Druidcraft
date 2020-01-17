@@ -1,27 +1,25 @@
 package com.vulp.druidcraft.registry;
 
 import com.vulp.druidcraft.particle.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.particles.BasicParticleType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.particle.DefaultParticleType;
+import net.minecraft.particle.ParticleType;
 
 public class ParticleRegistry {
-    public static final BasicParticleType magic_smoke = new BasicParticleType(false);
-    public static final BasicParticleType fiery_glow = new BasicParticleType(false);
-    public static final BasicParticleType fiery_spark = new BasicParticleType(false);
-    public static final BasicParticleType magic_mist = new BasicParticleType(false);
-    public static final BasicParticleType magic_glitter = new BasicParticleType(false);
+    public static final DefaultParticleType magic_smoke = new CustomParticleType(false);
+    public static final DefaultParticleType fiery_glow = new CustomParticleType(false);
+    public static final DefaultParticleType fiery_spark = new CustomParticleType(false);
+    public static final DefaultParticleType magic_mist = new CustomParticleType(false);
+    public static final DefaultParticleType magic_glitter = new CustomParticleType(false);
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public static void registerFactories() {
-        ParticleManager particles = Minecraft.getInstance().particles;
-
-        particles.registerFactory(magic_smoke, MagicSmokeParticle.Factory::new);
-        particles.registerFactory(fiery_glow, FieryGlowParticle.Factory::new);
-        particles.registerFactory(fiery_spark, FierySparkParticle.Factory::new);
-        particles.registerFactory(magic_mist, MagicMistParticle.Factory::new);
-        particles.registerFactory(magic_glitter, MagicGlitterParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(magic_smoke, MagicSmokeParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(fiery_glow, FieryGlowParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(fiery_spark, FierySparkParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(magic_mist, MagicMistParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(magic_glitter, MagicGlitterParticle.Factory::new);
     }
 }

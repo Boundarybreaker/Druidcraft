@@ -12,14 +12,14 @@ public class SitGoalMonster extends Goal {
 
     public SitGoalMonster(TameableFlyingMonsterEntity entityIn) {
         this.tameable = entityIn;
-        this.setMutexFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
+        this.setControls(EnumSet.of(Goal.Control.JUMP, Goal.Control.MOVE));
     }
 
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
     @Override
-	public boolean shouldContinueExecuting() {
+	public boolean shouldContinue() {
         return this.isSitting;
     }
 
@@ -27,17 +27,17 @@ public class SitGoalMonster extends Goal {
      * Returns whether the EntityAIBase should begin execution.
      */
     @Override
-	public boolean shouldExecute() {
+	public boolean canStart() {
         if (!this.tameable.isTamed()) {
             return false;
-        } else if (this.tameable.isInWaterOrBubbleColumn()) {
+        } else if (this.tameable.isInsideWaterOrBubbleColumn()) {
             return false;
         } else {
             LivingEntity livingentity = this.tameable.getOwner();
             if (livingentity == null) {
                 return true;
             } else {
-                return this.tameable.getDistanceSq(livingentity) < 144.0D && livingentity.getRevengeTarget() != null ? false : this.isSitting;
+                return this.tameable.squaredDistanceTo(livingentity) < 144.0D && livingentity.getAttacker() != null ? false : this.isSitting;
             }
         }
     }
@@ -46,8 +46,8 @@ public class SitGoalMonster extends Goal {
      * Execute a one shot task or start executing a continuous task
      */
     @Override
-	public void startExecuting() {
-        this.tameable.getNavigator().clearPath();
+	public void start() {
+        this.tameable.getNavigation().stop();
         this.tameable.setSitting(true);
     }
 
@@ -55,7 +55,7 @@ public class SitGoalMonster extends Goal {
      * Reset the task's internal state. Called when this task is interrupted by another one
      */
     @Override
-	public void resetTask() {
+	public void stop() {
         this.tameable.setSitting(false);
     }
 

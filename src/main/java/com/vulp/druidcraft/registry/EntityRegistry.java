@@ -6,24 +6,19 @@ import com.vulp.druidcraft.config.EntitySpawnConfig;
 import com.vulp.druidcraft.entities.BeetleEntity;
 import com.vulp.druidcraft.entities.DreadfishEntity;
 import com.vulp.druidcraft.entities.LunarMothEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.entity.EntitySpawnPlacementRegistry;
-import net.minecraft.entity.EntityType;
+import net.fabricmc.fabric.api.entity.FabricEntityTypeBuilder;
+import net.minecraft.entity.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.Heightmap;
 import net.minecraftforge.common.BiomeDictionary;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.network.FMLPlayMessages;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class EntityRegistry
@@ -31,34 +26,15 @@ public class EntityRegistry
 
     public EntityRegistry() {
     }
-    public static final EntityType<DreadfishEntity> dreadfish_entity = createEntity(DreadfishEntity::new, EntityClassification.MONSTER, "dreadfish", 0.8f, 0.4f);
-    public static final EntityType<BeetleEntity> beetle_entity = createEntity(BeetleEntity::new, EntityClassification.MONSTER, "beetle", 1.5f, 1.5f);
-    public static final EntityType<LunarMothEntity> lunar_moth_entity = createEntity(LunarMothEntity::new, EntityClassification.CREATURE, "lunar_moth", 0.5f, 0.5f);
+    public static final EntityType<DreadfishEntity> dreadfish_entity = createEntity(DreadfishEntity::new, EntityCategory.MONSTER, 0.8f, 0.4f);
+    public static final EntityType<BeetleEntity> beetle_entity = createEntity(BeetleEntity::new, EntityCategory.MONSTER, 1.5f, 1.5f);
+    public static final EntityType<LunarMothEntity> lunar_moth_entity = createEntity(LunarMothEntity::new, EntityCategory.CREATURE, 0.5f, 0.5f);
 
-    private static <T extends Entity> EntityType<T> createEntity(EntityType.IFactory<T> factory, EntityClassification entityClassification, String name, float width, float height) {
-        return createEntity(factory, entityClassification, name, width, height, -1, null);
-    }
 
-    private static <T extends Entity> EntityType<T> createEntity(EntityType.IFactory<T> factory, EntityClassification entityClassification, String name, float width, float height, int trackingRange,  BiFunction<FMLPlayMessages.SpawnEntity, World, T> customClientFactory) {
-        Identifier location = new Identifier(Druidcraft.MODID, name);
 
-        EntityType.Builder<T> builder = EntityType.Builder.create(factory, entityClassification)
-                .size(width, height)
-                .setShouldReceiveVelocityUpdates(true)
-                .setUpdateInterval(3);
+    private static <T extends Entity> EntityType<T> createEntity(EntityType.EntityFactory<T> factory, EntityCategory category,float width, float height) {
 
-        if (customClientFactory != null) {
-            builder.setCustomClientFactory(customClientFactory);
-        }
-        if (trackingRange != -1) {
-            builder.setTrackingRange(trackingRange);
-        }
-
-        EntityType<T> entity = builder.build(location.toString());
-
-        entity.setRegistryName(location);
-
-        return entity;
+        return FabricEntityTypeBuilder.create(category, factory).size(EntityDimensions.fixed(width, height)).build();
     }
 
     public static void registerEntitySpawnEggs()
@@ -70,8 +46,8 @@ public class EntityRegistry
 
     public static void registerEntityWorldSpawns()
     {
-        registerEntityWorldSpawn(EntitySpawnConfig.dreadfish_spawn.get(), dreadfish_entity, EntityClassification.MONSTER, EntitySpawnConfig.dreadfish_weight.get(), EntitySpawnConfig.dreadfish_min_group.get(), EntitySpawnConfig.dreadfish_max_group.get(), EntitySpawnConfig.dreadfish_biome_types.get(), EntitySpawnConfig.dreadfish_biome_exclusions.get());
-        registerEntityWorldSpawn(EntitySpawnConfig.beetle_spawn.get(), beetle_entity, EntityClassification.MONSTER, EntitySpawnConfig.beetle_weight.get(), EntitySpawnConfig.beetle_min_group.get(), EntitySpawnConfig.beetle_max_group.get(), EntitySpawnConfig.beetle_biome_types.get(), EntitySpawnConfig.beetle_biome_exclusions.get());
+        registerEntityWorldSpawn(EntitySpawnConfig.dreadfish_spawn, dreadfish_entity, EntityCategory.MONSTER, EntitySpawnConfig.dreadfish_weight, EntitySpawnConfig.dreadfish_min_group, EntitySpawnConfig.dreadfish_max_group, EntitySpawnConfig.dreadfish_biome_types, EntitySpawnConfig.dreadfish_biome_exclusions);
+        registerEntityWorldSpawn(EntitySpawnConfig.beetle_spawn, beetle_entity, EntityCategory.MONSTER, EntitySpawnConfig.beetle_weight, EntitySpawnConfig.beetle_min_group, EntitySpawnConfig.beetle_max_group, EntitySpawnConfig.beetle_biome_types, EntitySpawnConfig.beetle_biome_exclusions);
 
         EntitySpawnPlacementRegistry.register(beetle_entity, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::placement);
         EntitySpawnPlacementRegistry.register(dreadfish_entity, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, DreadfishEntity::placement);
@@ -83,7 +59,7 @@ public class EntityRegistry
         return Registry.register(Registry.ITEM, new Identifier(Druidcraft.MODID, name), item);
     }
 
-    public static void registerEntityWorldSpawn(boolean spawnEnabled, EntityType<?> entity, EntityClassification classification, int weight, int minGroupCountIn, int maxGroupCountIn, List<String> biomes, List<String> exclusions) {
+    public static void registerEntityWorldSpawn(boolean spawnEnabled, EntityType<?> entity, EntityCategory classification, int weight, int minGroupCountIn, int maxGroupCountIn, List<String> biomes, List<String> exclusions) {
         Set<Biome> biomeSet = new HashSet<>();
 
         if (spawnEnabled) {

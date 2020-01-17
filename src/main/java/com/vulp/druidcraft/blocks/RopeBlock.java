@@ -5,44 +5,43 @@ import com.vulp.druidcraft.Druidcraft;
 import com.vulp.druidcraft.api.IKnifeable;
 import com.vulp.druidcraft.api.RopeConnectionType;
 import com.vulp.druidcraft.registry.BlockRegistry;
-import net.minecraft.block.*;
-import net.minecraft.block.material.PushReaction;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ConnectedPlantBlock;
+import net.minecraft.block.Waterloggable;
+import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.fluid.IFluidState;
 import net.minecraft.item.*;
-import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.EnumProperty;
-import net.minecraft.state.IProperty;
-import net.minecraft.state.StateContainer;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
-import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.Properties;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.util.*;
+import net.minecraft.state.property.Property;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.Util;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.Map;
 
 @SuppressWarnings("deprecation")
-public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandler, ILiquidContainer, IKnifeable {
+public class RopeBlock extends ConnectedPlantBlock implements Waterloggable, IKnifeable {
     private static final Direction[] FACING_VALUES = Direction.values();
     public static final EnumProperty<RopeConnectionType> NORTH = EnumProperty.of("north", RopeConnectionType.class);
     public static final EnumProperty<RopeConnectionType> EAST = EnumProperty.of("east", RopeConnectionType.class);
@@ -77,11 +76,11 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
     }
 
     @Override
-    public ActionResultType onKnife(ItemUseContext context) {
-        BlockPos pos = context.getPos();
+    public ActionResult onKnife(ItemUsageContext context) {
+        BlockPos pos = context.getBlockPos();
         World world = context.getWorld();
         BlockState state = world.getBlockState(pos);
-        Vec3d relative = context.getHitVec().subtract(pos.getX(), pos.getY(), pos.getZ());
+        Vec3d relative = context.getHitPos().subtract(pos.getX(), pos.getY(), pos.getZ());
         Druidcraft.LOGGER.debug("onKnife: {}", relative);
 
         Direction side = getClickedConnection(relative);
@@ -89,25 +88,25 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
             if (!(world.getBlockState(pos.offset(side)).getBlock() instanceof RopeBlock )) {
                 BlockState state1 = cycleProperty(state, FACING_TO_PROPERTY_MAP.get(side), context);
                 world.setBlockState(pos, state1, 18);
-                return ActionResultType.SUCCESS;
+                return ActionResult.SUCCESS;
             }
         }
 
-        return ActionResultType.PASS;
+        return ActionResult.PASS;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Comparable<T>> BlockState cycleProperty(BlockState state, IProperty<T> propertyIn, ItemUseContext context) {
-        T value = getAdjacentValue(propertyIn.getAllowedValues(), state.get(propertyIn));
+    private <T extends Comparable<T>> BlockState cycleProperty(BlockState state, Property<T> propertyIn, ItemUsageContext context) {
+        T value = getAdjacentValue(propertyIn.getValues(), state.get(propertyIn));
         if (value != RopeConnectionType.NONE) {
             return calculateKnot(state.with(propertyIn, (T) RopeConnectionType.NONE));
         } else if (!state.get(KNOTTED) && context.getPlayer().isSneaking()) {
             return state.with(KNOTTED, true);
-        } else return calculateState(state, context.getWorld(), context.getPos());
+        } else return calculateState(state, context.getWorld(), context.getBlockPos());
     }
 
     private static <T> T getAdjacentValue(Iterable<T> p_195959_0_, @Nullable T p_195959_1_) {
-        return Util.getElementAfter(p_195959_0_, p_195959_1_);
+        return Util.next(p_195959_0_, p_195959_1_);
     }
 
     @Nullable
@@ -128,29 +127,24 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return this.shapes[this.getShapeIndex(state)];
+    public VoxelShape getOutlineShape(BlockState state, BlockView worldIn, BlockPos pos, EntityContext context) {
+        return this.collisionShapes[this.getConnectionMask(state)];
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
-        return this.collisionShapes[this.getShapeIndex(state)];
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
+    public VoxelShape getCollisionShape(BlockState state, BlockView worldIn, BlockPos pos, EntityContext context) {
+        return this.collisionShapes[this.getConnectionMask(state)];
     }
 
     private VoxelShape[] makeCollisionShapes(float apothem) {
         float f = 0.5F - apothem;
         float f1 = 0.5F + apothem;
-        VoxelShape voxelshape = Block.makeCuboidShape((double)(f * 16.0F), (double)(f * 16.0F), (double)(f * 16.0F), (double)(f1 * 16.0F), (double)(f1 * 16.0F), (double)(f1 * 16.0F));
+        VoxelShape voxelshape = Block.createCuboidShape(f * 16.0F, f * 16.0F, f * 16.0F, f1 * 16.0F, f1 * 16.0F, f1 * 16.0F);
         VoxelShape[] avoxelshape = new VoxelShape[FACING_VALUES.length];
 
         for(int i = 0; i < FACING_VALUES.length; ++i) {
             Direction direction = FACING_VALUES[i];
-            avoxelshape[i] = VoxelShapes.create(0.5D + Math.min((double)(-apothem), (double)direction.getXOffset() * 0.5D), 0.5D + Math.min((double)(-apothem), (double)direction.getYOffset() * 0.5D), 0.5D + Math.min((double)(-apothem), (double)direction.getZOffset() * 0.5D), 0.5D + Math.max((double)apothem, (double)direction.getXOffset() * 0.5D), 0.5D + Math.max((double)apothem, (double)direction.getYOffset() * 0.5D), 0.5D + Math.max((double)apothem, (double)direction.getZOffset() * 0.5D));
+            avoxelshape[i] = VoxelShapes.cuboid(0.5D + Math.min(-apothem, (double)direction.getOffsetX() * 0.5D), 0.5D + Math.min(-apothem, (double)direction.getOffsetY() * 0.5D), 0.5D + Math.min(-apothem, (double)direction.getOffsetZ() * 0.5D), 0.5D + Math.max(apothem, (double)direction.getOffsetX() * 0.5D), 0.5D + Math.max(apothem, (double)direction.getOffsetY() * 0.5D), 0.5D + Math.max(apothem, (double)direction.getOffsetZ() * 0.5D));
         }
 
         VoxelShape[] avoxelshape1 = new VoxelShape[64];
@@ -160,7 +154,7 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
             for(int j = 0; j < FACING_VALUES.length; ++j) {
                 if ((k & 1 << j) != 0) {
-                    voxelshape1 = VoxelShapes.or(voxelshape1, avoxelshape[j]);
+                    voxelshape1 = VoxelShapes.union(voxelshape1, avoxelshape[j]);
                 }
             }
 
@@ -175,15 +169,16 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
         builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN, KNOTTED, WATERLOGGED);
     }
 
-    @Override
-    public boolean isLadder(BlockState state, IWorldReader world, BlockPos pos, LivingEntity entity) {
-        return true;
-    }
+    //TODO: climbable API, eventually
+//    @Override
+//    public boolean isLadder(BlockState state, WorldView world, BlockPos pos, LivingEntity entity) {
+//        return true;
+//    }
 
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        IFluidState ifluidstate = context.getWorld().getFluidState(context.getPos());
-        return calculateState(getDefaultState(), context.getWorld(), context.getPos()).with(WATERLOGGED, ifluidstate.getFluid() == Fluids.WATER);
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        FluidState ifluidstate = context.getWorld().getFluidState(context.getBlockPos());
+        return calculateState(getDefaultState(), context.getWorld(), context.getBlockPos()).with(WATERLOGGED, ifluidstate.getFluid() == Fluids.WATER);
     }
 
     private BlockState calculateKnot (BlockState currentState) {
@@ -203,11 +198,11 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
     }
 
     @Override
-    public boolean receiveFluid(IWorld worldIn, BlockPos pos, BlockState state, IFluidState fluidState) {
+    public boolean tryFillWithFluid(IWorld worldIn, BlockPos pos, BlockState state, FluidState fluidState) {
         if (!state.get(WATERLOGGED) && fluidState.getFluid() == Fluids.WATER) {
-            if (!worldIn.isRemote()) {
+            if (!worldIn.isClient()) {
                 worldIn.setBlockState(pos, state.with(WATERLOGGED, Boolean.valueOf(true)), 3);
-                worldIn.getPendingFluidTicks().scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
+                worldIn.getFluidTickScheduler().schedule(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
             }
             return true;
         } else {
@@ -216,7 +211,7 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
     }
 
     @Override
-    public Fluid pickupFluid(IWorld worldIn, BlockPos pos, BlockState state) {
+    public Fluid tryDrainFluid(IWorld worldIn, BlockPos pos, BlockState state) {
         if (state.get(WATERLOGGED)) {
             worldIn.setBlockState(pos, state.with(WATERLOGGED, Boolean.valueOf(false)), 3);
             return Fluids.WATER;
@@ -226,26 +221,26 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
+    public boolean isTranslucent(BlockState state, BlockView reader, BlockPos pos) {
         return !state.get(WATERLOGGED);
     }
 
     @Override
     @SuppressWarnings("deprecation")
-    public IFluidState getFluidState(BlockState state) {
-        return state.get(WATERLOGGED) ? Fluids.WATER.getStillFluidState(false) : super.getFluidState(state);
+    public FluidState getFluidState(BlockState state) {
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     @Override
-    public boolean canContainFluid(IBlockReader worldIn, BlockPos pos, BlockState state, Fluid fluid) {
+    public boolean canFillWithFluid(BlockView worldIn, BlockPos pos, BlockState state, Fluid fluid) {
         return !state.get(WATERLOGGED) && fluid == Fluids.WATER;
     }
 
     @Override
-    public BlockState updatePostPlacement(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState getStateForNeighborUpdate(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos currentPos, BlockPos facingPos) {
 
         if (state.get(WATERLOGGED)) {
-            world.getPendingFluidTicks().scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(world));
+            world.getFluidTickScheduler().schedule(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(world));
         }
 
         return calculateState(state, world, currentPos);
@@ -301,9 +296,9 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
         RopeConnectionType northType = RopeConnectionType.NONE;
         BlockState northState = world.getBlockState(pos.offset(Direction.NORTH));
-        if (northState.func_224755_d(world, pos.offset(Direction.NORTH), Direction.NORTH.getOpposite()) || northState.getBlock() == this) {
+        if (northState.isSideSolidFullSquare(world, pos.offset(Direction.NORTH), Direction.NORTH.getOpposite()) || northState.getBlock() == this) {
             northType = RopeConnectionType.REGULAR;
-        } else if (northState.getBlock().isIn(BlockTags.FENCES)) {
+        } else if (northState.getBlock().matches(BlockTags.FENCES)) {
             northType = RopeConnectionType.TIED_FENCE;
         } else if (northState.getBlock() instanceof SmallBeamBlock) {
             northType = beamChecker(northState, Direction.NORTH);
@@ -311,9 +306,9 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
         RopeConnectionType eastType = RopeConnectionType.NONE;
         BlockState eastState = world.getBlockState(pos.offset(Direction.EAST));
-        if (eastState.func_224755_d(world, pos.offset(Direction.EAST), Direction.EAST.getOpposite()) || eastState.getBlock() == this) {
+        if (eastState.isSideSolidFullSquare(world, pos.offset(Direction.EAST), Direction.EAST.getOpposite()) || eastState.getBlock() == this) {
             eastType = RopeConnectionType.REGULAR;
-        } else if (eastState.getBlock().isIn(BlockTags.FENCES)) {
+        } else if (eastState.getBlock().matches(BlockTags.FENCES)) {
             eastType = RopeConnectionType.TIED_FENCE;
         } else if (eastState.getBlock() instanceof SmallBeamBlock) {
             eastType = beamChecker(eastState, Direction.EAST);
@@ -322,9 +317,9 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
         RopeConnectionType southType = RopeConnectionType.NONE;
         BlockState southState = world.getBlockState(pos.offset(Direction.SOUTH));
-        if (southState.func_224755_d(world, pos.offset(Direction.SOUTH), Direction.SOUTH.getOpposite()) || southState.getBlock() == this) {
+        if (southState.isSideSolidFullSquare(world, pos.offset(Direction.SOUTH), Direction.SOUTH.getOpposite()) || southState.getBlock() == this) {
             southType = RopeConnectionType.REGULAR;
-        } else if (southState.getBlock().isIn(BlockTags.FENCES)) {
+        } else if (southState.getBlock().matches(BlockTags.FENCES)) {
             southType = RopeConnectionType.TIED_FENCE;
         } else if (southState.getBlock() instanceof SmallBeamBlock) {
             southType = beamChecker(southState, Direction.SOUTH);
@@ -332,9 +327,9 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
         RopeConnectionType westType = RopeConnectionType.NONE;
         BlockState westState = world.getBlockState(pos.offset(Direction.WEST));
-        if (westState.func_224755_d(world, pos.offset(Direction.WEST), Direction.WEST.getOpposite()) || westState.getBlock() == this) {
+        if (westState.isSideSolidFullSquare(world, pos.offset(Direction.WEST), Direction.WEST.getOpposite()) || westState.getBlock() == this) {
             westType = RopeConnectionType.REGULAR;
-        } else if (westState.getBlock().isIn(BlockTags.FENCES)) {
+        } else if (westState.getBlock().matches(BlockTags.FENCES)) {
             westType = RopeConnectionType.TIED_FENCE;
         } else if (westState.getBlock() instanceof SmallBeamBlock) {
             westType = beamChecker(westState, Direction.WEST);
@@ -342,7 +337,7 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
         RopeConnectionType upType = RopeConnectionType.NONE;
         BlockState upState = world.getBlockState(pos.offset(Direction.UP));
-        if (upState.func_224755_d(world, pos.offset(Direction.UP), Direction.UP.getOpposite()) || upState.getBlock() == this || upState.getBlock().isIn(BlockTags.FENCES)) {
+        if (upState.isSideSolidFullSquare(world, pos.offset(Direction.UP), Direction.UP.getOpposite()) || upState.getBlock() == this || upState.getBlock().matches(BlockTags.FENCES)) {
             upType = RopeConnectionType.REGULAR;
         } else if (upState.getBlock() instanceof SmallBeamBlock) {
             upType = beamChecker(upState, Direction.UP);
@@ -350,7 +345,7 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
 
         RopeConnectionType downType = RopeConnectionType.NONE;
         BlockState downState = world.getBlockState(pos.offset(Direction.DOWN));
-        if (downState.func_224755_d(world, pos.offset(Direction.DOWN), Direction.DOWN.getOpposite()) || downState.getBlock() == this || downState.getBlock().isIn(BlockTags.FENCES) || downState.getBlock() instanceof RopeLanternBlock || (downState.getBlock() instanceof RopeableLanternBlock && downState.get(RopeableLanternBlock.HANGING) && downState.get(RopeableLanternBlock.ROPED))) {
+        if (downState.isSideSolidFullSquare(world, pos.offset(Direction.DOWN), Direction.DOWN.getOpposite()) || downState.getBlock() == this || downState.getBlock().matches(BlockTags.FENCES) || downState.getBlock() instanceof RopeLanternBlock || (downState.getBlock() instanceof RopeableLanternBlock && downState.get(RopeableLanternBlock.HANGING) && downState.get(RopeableLanternBlock.ROPED))) {
             downType = RopeConnectionType.REGULAR;
         } else if (downState.getBlock() instanceof SmallBeamBlock) {
             downType = beamChecker(downState, Direction.DOWN);
@@ -366,29 +361,29 @@ public class RopeBlock extends ConnectedPlantBlock implements IBucketPickupHandl
     }
 
     @Override
-    public boolean onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        ItemStack itemstack = player.getHeldItem(handIn);
+    public ActionResult onUse(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockHitResult hit) {
+        ItemStack itemstack = player.getStackInHand(handIn);
         Item item = itemstack.getItem();
 
-        if (item == Items.LANTERN && hit.getFace() == Direction.DOWN && worldIn.getBlockState(pos.down()).getMaterial().isReplaceable()) {
-            if (!player.abilities.isCreativeMode) {
-                itemstack.shrink(1);
+        if (item == Items.LANTERN && hit.getSide() == Direction.DOWN && worldIn.getBlockState(pos.down()).getMaterial().isReplaceable()) {
+            if (!player.abilities.creativeMode) {
+                itemstack.decrement(1);
             }
             worldIn.setBlockState(pos.down(), BlockRegistry.rope_lantern.getDefaultState());
             worldIn.playSound(pos.getX(), pos.getY(), pos.getZ(), SoundEvents.BLOCK_LANTERN_PLACE, SoundCategory.BLOCKS, 1.0F, 0.88F, true);
-            return true;
+            return ActionResult.SUCCESS;
         } else {
-            return false;
+            return ActionResult.FAIL;
         }
     }
 
     @Override
-    public PushReaction getPushReaction(BlockState state) {
-        return PushReaction.DESTROY;
+    public PistonBehavior getPistonBehavior(BlockState state) {
+        return PistonBehavior.DESTROY;
     }
 
     @Override
-    protected int getShapeIndex(BlockState state) {
+    protected int getConnectionMask(BlockState state) {
         int i = 0;
 
         for(int j = 0; j < Direction.values().length; ++j) {

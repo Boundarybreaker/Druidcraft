@@ -1,17 +1,16 @@
 package com.vulp.druidcraft.blocks;
 
 import com.vulp.druidcraft.registry.ParticleRegistry;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.item.*;
+import net.minecraft.entity.EntityContext;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +27,8 @@ public class SoulfireBlock extends Block {
 
     @Override
     @SuppressWarnings("deprecation")
-    public VoxelShape getShape(BlockState state, IBlockReader blockReader, BlockPos pos, ISelectionContext selectionContext) {
-        return Block.makeCuboidShape(5.0d, 5.0d, 5.0d, 11.0d, 11.0d, 11.0d);
+    public VoxelShape getOutlineShape(BlockState state, BlockView blockReader, BlockPos pos, EntityContext selectionContext) {
+        return Block.createCuboidShape(5.0d, 5.0d, 5.0d, 11.0d, 11.0d, 11.0d);
     }
 
     static {
@@ -59,10 +58,10 @@ public class SoulfireBlock extends Block {
         return this.color;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
-    public void animateTick(BlockState state, World world, BlockPos pos, Random random) {
-        super.animateTick(state, world, pos, random);
+    public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
+        super.randomDisplayTick(state, world, pos, random);
         double d0 = (double) pos.getX() + 0.5D;
         double d1 = (double) pos.getY() + 0.5D;
         double d2 = (double) pos.getZ() + 0.5D;

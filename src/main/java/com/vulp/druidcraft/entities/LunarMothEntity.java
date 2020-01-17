@@ -1,24 +1,29 @@
 package com.vulp.druidcraft.entities;
 
 import com.vulp.druidcraft.items.LunarMothJarItem;
-import com.vulp.druidcraft.registry.ItemRegistry;
-import com.vulp.druidcraft.registry.ParticleRegistry;
 import com.vulp.druidcraft.registry.SoundEventRegistry;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.*;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityDimensions;
+import net.minecraft.entity.EntityPose;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.TargetPredicate;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.GlassBottleItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.util.*;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -26,10 +31,10 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 
 public class LunarMothEntity extends AnimalEntity {
-    private static final DataParameter<Boolean> RESTING = EntityDataManager.createKey(LunarMothEntity.class, DataSerializers.BOOLEAN);
-    private static final DataParameter<Direction> IDLING = EntityDataManager.createKey(LunarMothEntity.class, DataSerializers.DIRECTION);
-    public static final DataParameter<Integer> COLOR = EntityDataManager.createKey(LunarMothEntity.class, DataSerializers.VARINT);
-    private static final EntityPredicate entityPredicate = (new EntityPredicate()).setDistance(4.0D).allowFriendlyFire();
+    private static final TrackedData<Boolean> RESTING = DataTracker.registerData(LunarMothEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Direction> IDLING = DataTracker.registerData(LunarMothEntity.class, TrackedDataHandlerRegistry.FACING);
+    public static final TrackedData<Integer> COLOR = DataTracker.registerData(LunarMothEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TargetPredicate entityPredicate = new TargetPredicate().setBaseMaxDistance(4.0D).includeTeammates();
     public int timeUntilDropGlowstone;
     private BlockPos spawnPosition;
     public LunarMothEntity(EntityType<? extends LunarMothEntity> type, World worldIn) {
@@ -37,155 +42,157 @@ public class LunarMothEntity extends AnimalEntity {
     }
 
     @Override
-    protected void registerAttributes() {
-        super.registerAttributes();
-        this.timeUntilDropGlowstone = this.rand.nextInt(6000) + 8000;
-        this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(6.0D);
+    protected void initAttributes() {
+        super.initAttributes();
+        this.timeUntilDropGlowstone = this.random.nextInt(6000) + 8000;
+        this.getAttributeInstance(EntityAttributes.MAX_HEALTH).setBaseValue(6.0D);
     }
 
     @Override
-    protected void registerData() {
-        super.registerData();
-        this.dataManager.register(RESTING, false);
-        this.dataManager.register(IDLING, Direction.NORTH);
-        this.dataManager.register(COLOR, LunarMothColors.colorToInt(LunarMothColors.randomColor(rand)));
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(RESTING, false);
+        this.dataTracker.startTracking(IDLING, Direction.NORTH);
+        this.dataTracker.startTracking(COLOR, LunarMothColors.colorToInt(LunarMothColors.randomColor(random)));
     }
 
     @Override
-    public boolean processInteract(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getHeldItem(hand);
+    public boolean interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemstack = player.getStackInHand(hand);
         Item item = itemstack.getItem();
         if (item == Items.GLASS_BOTTLE) {
-            player.getEntityWorld().playSound(player, player.posX, player.posY, player.posZ, SoundEventRegistry.fill_bottle, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+            player.getEntityWorld().playSound(player, player.getPos().x, player.getPos().y, player.getPos().z, SoundEventRegistry.fill_bottle, SoundCategory.NEUTRAL, 1.0F, 1.0F);
             this.bottleToMothJar(itemstack, player);
             remove();
             return true;
         }
-        return super.processInteract(player, hand);
+        return super.interactMob(player, hand);
     }
 
     protected void bottleToMothJar(ItemStack itemstack, PlayerEntity player) {
-        itemstack.shrink(1);
+        itemstack.decrement(1);
 
         ItemStack stack = LunarMothJarItem.getItemStackByColor(getColor());
-        CompoundNBT entityData = new CompoundNBT();
-        writeAdditional(entityData);
+        CompoundTag entityData = new CompoundTag();
+        writeCustomDataToTag(entityData);
         stack.getOrCreateTag().put("EntityTag", entityData);
 
-        if (!player.inventory.addItemStackToInventory(stack)) {
+        if (!player.inventory.insertStack(stack)) {
             player.dropItem(stack, false);
         }
     }
 
     public boolean getMothResting() {
-        return (this.dataManager.get(RESTING));
+        return (this.dataTracker.get(RESTING));
     }
 
     public LunarMothColors getColor() {
-        return LunarMothColors.colorArray().get(this.dataManager.get(COLOR));
+        return LunarMothColors.colorArray().get(this.dataTracker.get(COLOR));
     }
 
     public Direction getMothIdleDirection() {
-        return (this.dataManager.get(IDLING));
+        return (this.dataTracker.get(IDLING));
     }
 
     public void setMothResting(boolean resting) {
-        this.dataManager.set(RESTING, resting);
+        this.dataTracker.set(RESTING, resting);
     }
 
     public void setMothIdleDirection(Direction direction) {
-        this.dataManager.set(IDLING, direction);
+        this.dataTracker.set(IDLING, direction);
     }
 
     @Override
     public void tick() {
         super.tick();
         if (this.getMothResting()) {
-            this.setMotion(Vec3d.ZERO);
+            this.setVelocity(Vec3d.ZERO);
         } else {
-            this.setMotion(this.getMotion().mul(1.0D, 0.6D, 1.0D));
+            this.setVelocity(this.getVelocity().multiply(1.0D, 0.6D, 1.0D));
         }
 
     }
 
     @Override
-    protected void updateAITasks() {
-        super.updateAITasks();
+    protected void mobTick() {
+        super.mobTick();
         BlockPos blockpos = new BlockPos(this);
         BlockPos blockpos1 = blockpos.up();
         if (this.getMothResting()) {
-            if (this.world.getBlockState(blockpos1).isNormalCube(this.world, blockpos)) {
-                if (this.rand.nextInt(200) == 0) {
-                    this.rotationYawHead = (float)this.rand.nextInt(360);
+            if (this.world.getBlockState(blockpos1).isFullCube(this.world, blockpos)) {
+                if (this.random.nextInt(200) == 0) {
+                    this.headYaw = (float)this.random.nextInt(360);
                 }
 
                 if (this.world.getClosestPlayer(entityPredicate, this) != null) {
                     this.setMothResting(false);
-                    this.world.playEvent(null, 1025, blockpos, 0);
+                    this.world.playLevelEvent(null, 1025, blockpos, 0);
                 }
             } else {
                 this.setMothResting(false);
-                this.world.playEvent(null, 1025, blockpos, 0);
+                this.world.playLevelEvent(null, 1025, blockpos, 0);
             }
         } else {
-            if (this.spawnPosition != null && (!this.world.isAirBlock(this.spawnPosition) || this.spawnPosition.getY() < 1)) {
+            if (this.spawnPosition != null && (!this.world.isAir(this.spawnPosition) || this.spawnPosition.getY() < 1)) {
                 this.spawnPosition = null;
             }
 
-            if (this.spawnPosition == null || this.rand.nextInt(30) == 0 || this.spawnPosition.withinDistance(this.getPositionVec(), 2.0D)) {
-                this.spawnPosition = new BlockPos(this.posX + (double)this.rand.nextInt(7) - (double)this.rand.nextInt(7), this.posY + (double)this.rand.nextInt(6) - 2.0D, this.posZ + (double)this.rand.nextInt(7) - (double)this.rand.nextInt(7));
+            if (this.spawnPosition == null || this.random.nextInt(30) == 0 || this.spawnPosition.isWithinDistance(this.getPosVector(), 2.0D)) {
+                this.spawnPosition = new BlockPos(this.getPos().x + (double)this.random.nextInt(7) - (double)this.random.nextInt(7), this.getPos().y + (double)this.random.nextInt(6) - 2.0D, this.getPos().z + (double)this.random.nextInt(7) - (double)this.random.nextInt(7));
             }
 
-            double d0 = (double)this.spawnPosition.getX() + 0.5D - this.posX;
-            double d1 = (double)this.spawnPosition.getY() + 0.1D - this.posY;
-            double d2 = (double)this.spawnPosition.getZ() + 0.5D - this.posZ;
-            Vec3d vec3d = this.getMotion();
+            double d0 = (double)this.spawnPosition.getX() + 0.5D - this.getPos().x;
+            double d1 = (double)this.spawnPosition.getY() + 0.1D - this.getPos().y;
+            double d2 = (double)this.spawnPosition.getZ() + 0.5D - this.getPos().z;
+            Vec3d vec3d = this.getVelocity();
             Vec3d vec3d1 = vec3d.add((Math.signum(d0) * 0.5D - vec3d.x) * 0.10000000149011612D, (Math.signum(d1) * 0.699999988079071D - vec3d.y) * 0.10000000149011612D, (Math.signum(d2) * 0.5D - vec3d.z) * 0.10000000149011612D);
-            this.setMotion(vec3d1);
+            this.setVelocity(vec3d1);
             float f = (float)(MathHelper.atan2(vec3d1.z, vec3d1.x) * 57.2957763671875D) - 90.0F;
-            float f1 = MathHelper.wrapDegrees(f - this.rotationYaw);
-            this.moveForward = 0.5F;
-            this.rotationYaw += f1;
+            float f1 = MathHelper.wrapDegrees(f - this.yaw);
+            this.forwardSpeed = 0.5F;
+            this.yaw += f1;
         }
     }
 
+    //TODO: what is this?
+//    @Override
+//    protected boolean canTriggerWalking() {
+//        return false;
+//    }
+
     @Override
-    protected boolean canTriggerWalking() {
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier) {
         return false;
     }
 
     @Override
-    public void fall(float distance, float damageMultiplier) {
+    protected void fall(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
     }
 
     @Override
-    protected void updateFallState(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
-    }
-
-    @Override
-    public boolean doesEntityNotTriggerPressurePlate() {
+    public boolean canAvoidTraps() {
         return true;
     }
 
     @Override
-    public boolean attackEntityFrom(DamageSource source, float amount) {
+    public boolean damage(DamageSource source, float amount) {
         if (this.isInvulnerableTo(source)) {
             return false;
         } else {
-            if (!this.world.isRemote && this.getMothResting()) {
+            if (!this.world.isClient && this.getMothResting()) {
                 this.setMothResting(false);
             }
 
-            return super.attackEntityFrom(source, amount);
+            return super.damage(source, amount);
         }
     }
 
     @Override
     public void readCustomDataFromTag(CompoundTag compound) {
         super.readCustomDataFromTag(compound);
-        this.dataManager.set(RESTING, compound.getBoolean("MothResting"));
-        this.dataManager.set(IDLING, Direction.byIndex(compound.getByte("MothIdleDirection")));
-        this.dataManager.set(COLOR, compound.getInt("Color"));
+        this.dataTracker.set(RESTING, compound.getBoolean("MothResting"));
+        this.dataTracker.set(IDLING, Direction.byId(compound.getByte("MothIdleDirection")));
+        this.dataTracker.set(COLOR, compound.getInt("Color"));
         if (compound.contains("GlowstoneDropTime")) {
             this.timeUntilDropGlowstone = compound.getInt("GlowstoneDropTime");
         }
@@ -194,34 +201,34 @@ public class LunarMothEntity extends AnimalEntity {
     @Override
     public void writeCustomDataToTag(CompoundTag compound) {
         super.writeCustomDataToTag(compound);
-        compound.putBoolean("MothResting", this.dataManager.get(RESTING));
-        compound.putByte("MothIdleDirection", (byte) this.dataManager.get(IDLING).getIndex());
-        compound.putInt("Color", this.dataManager.get(COLOR));
+        compound.putBoolean("MothResting", this.dataTracker.get(RESTING));
+        compound.putByte("MothIdleDirection", (byte) this.dataTracker.get(IDLING).getId());
+        compound.putInt("Color", this.dataTracker.get(COLOR));
         compound.putInt("GlowstoneDropTime", this.timeUntilDropGlowstone);
     }
 
     @Nullable
     @Override
-    public AgeableEntity createChild(AgeableEntity ageable) {
+    public PassiveEntity createChild(PassiveEntity ageable) {
         return null;
     }
 
     @Override
-    protected void collideWithEntity(Entity entityIn) {
+    protected void pushAway(Entity entityIn) {
     }
 
     @Override
-    protected void collideWithNearbyEntities() {
+    protected void tickCramming() {
     }
 
     @Override
-    public void livingTick() {
-        super.livingTick();
-        if (!this.world.isRemote && this.isAlive() && --this.timeUntilDropGlowstone <= 0) {
-            this.entityDropItem(Items.GLOWSTONE_DUST);
-            this.timeUntilDropGlowstone = this.rand.nextInt(6000) + 8000;
+    public void tickMovement() {
+        super.tickMovement();
+        if (!this.world.isClient && this.isAlive() && --this.timeUntilDropGlowstone <= 0) {
+            this.dropItem(Items.GLOWSTONE_DUST);
+            this.timeUntilDropGlowstone = this.random.nextInt(6000) + 8000;
         }
-        /*if (this.world.isRemote) {
+        /*if (this.world.isClient) {
             int red = 1;
             int green = 1;
             int blue = 1;
@@ -256,16 +263,16 @@ public class LunarMothEntity extends AnimalEntity {
                 blue = 140;
             }
 
-            world.addParticle(ParticleRegistry.magic_mist, false, this.posX + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.posY + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.posZ + (((rand.nextDouble() - 0.5) + 0.2) / 3), red / 255.f, green / 255.f, blue / 255.f);
+            world.addParticle(ParticleRegistry.magic_mist, false, this.getPos().x + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().y + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().z + (((rand.nextDouble() - 0.5) + 0.2) / 3), red / 255.f, green / 255.f, blue / 255.f);
             if (rand.nextBoolean()) {
-                world.addParticle(ParticleRegistry.magic_glitter, false, this.posX + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.posY + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.posZ + (((rand.nextDouble() - 0.5) + 0.2) / 3), red + 40 / 255.f, green + 40 / 255.f, blue + 40 / 255.f);
+                world.addParticle(ParticleRegistry.magic_glitter, false, this.getPos().x + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().y + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().z + (((rand.nextDouble() - 0.5) + 0.2) / 3), red + 40 / 255.f, green + 40 / 255.f, blue + 40 / 255.f);
             }
         }*/
     }
 
     @Override
-    protected float getStandingEyeHeight(Pose poseIn, EntitySize sizeIn) {
-        return sizeIn.height / 2.0F;
+    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
+        return dimensions.height / 2.0F;
     }
 
 }

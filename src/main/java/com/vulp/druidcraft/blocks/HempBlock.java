@@ -1,37 +1,36 @@
 package com.vulp.druidcraft.blocks;
 
-import com.vulp.druidcraft.Druidcraft;
 import com.vulp.druidcraft.registry.BlockRegistry;
 import com.vulp.druidcraft.registry.ItemRegistry;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.state.IProperty;
-import net.minecraft.state.IntegerProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.util.IItemProvider;
+import net.minecraft.entity.EntityContext;
+import net.minecraft.item.ItemConvertible;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.IntProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.world.WorldView;
 
 import java.util.Random;
 
 public class HempBlock extends CropBlock {
-    private static final IntegerProperty HEMP_AGE;
+    private static final IntProperty HEMP_AGE;
 
     public HempBlock(Block.Settings properties) {
         super(properties);
     }
 
     @Override
-    public IntegerProperty getAgeProperty () {
+    public IntProperty getAgeProperty () {
         return HEMP_AGE;
     }
 
@@ -43,17 +42,17 @@ public class HempBlock extends CropBlock {
     boolean topBlockValid;
 
     @Override
-    protected int getBonemealAgeIncrease(World world) {
-        return MathHelper.nextInt(world.rand, 1, 3);
+    protected int getGrowthAmount(World world) {
+        return MathHelper.nextInt(world.random, 1, 3);
     }
 
     @Override
-    public boolean isValidPosition(BlockState state, IWorldReader world, BlockPos pos) {
-        return isValidGround(state, world, pos);
+    public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+        return canPlantOnTop(state, world, pos);
     }
 
     @Override
-    protected boolean isValidGround(BlockState state, IBlockReader world, BlockPos pos) {
+    protected boolean canPlantOnTop(BlockState state, BlockView world, BlockPos pos) {
         Block block = world.getBlockState(pos.down()).getBlock();
         if (block == Blocks.FARMLAND || block == BlockRegistry.hemp_crop) {
             return true;
@@ -62,36 +61,35 @@ public class HempBlock extends CropBlock {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    protected IItemProvider getSeedsItem() {
+    @Environment(EnvType.CLIENT)
+    protected ItemConvertible getSeedsItem() {
         return ItemRegistry.hemp_seeds;
     }
 
     @Override
-    public boolean canGrow(IBlockReader world, BlockPos pos, BlockState state, boolean isClient) {
-        return (!isMaxAge(state)) || (world.getBlockState(pos.down()).getBlock() != this) && (world.getBlockState(pos.up()).getBlock() != this);
+    public boolean isFertilizable(BlockView world, BlockPos pos, BlockState state, boolean isClient) {
+        return (!isMature(state)) || (world.getBlockState(pos.down()).getBlock() != this) && (world.getBlockState(pos.up()).getBlock() != this);
     }
 
     @Override
-    public void tick(BlockState state, World world, BlockPos pos, Random random) {
+    public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
 
-        super.tick(state, world, pos, random);
-        isValidPosition(state, world, pos);
+        super.scheduledTick(state, world, pos, random);
+        canPlaceAt(state, world, pos);
 
-        if ((world.getBlockState(pos.down()).getBlock() != this) && (world.isAirBlock(pos.up()))) {
+        if ((world.getBlockState(pos.down()).getBlock() != this) && (world.isAir(pos.up()))) {
             topBlockValid = true;
         } else {
             topBlockValid = false;
         }
 
-        if (!world.isAreaLoaded(pos, 1)) return;
-        if (world.getLightSubtracted(pos, 0) >= 9) {
+        if (!world.isChunkLoaded(pos)) return;
+        if (world.getLightLevel(pos, 0) >= 9) {
             int i = this.getAge(state);
             if (i < this.getMaxAge()) {
-                float f = getGrowthChance(this, world, pos);
-                if (net.minecraftforge.common.ForgeHooks.onCropsGrowPre(world, pos, state, random.nextInt((int) (25.0F / f) + 1) == 0) && (i < this.getMaxAge()) && (topBlockValid == false)) {
+                float f = getAvailableMoisture(this, world, pos);
+                if (random.nextInt((int)(25.0F / f) + 1) == 0) {
                     world.setBlockState(pos, this.withAge(i + 1), 2);
-                    net.minecraftforge.common.ForgeHooks.onCropsGrowPost(world, pos, state);
                 }
             }
             else {
@@ -103,8 +101,8 @@ public class HempBlock extends CropBlock {
     }
 
     @Override
-    public void grow(World world, BlockPos pos, BlockState state) {
-        int i = this.getAge(state) + this.getBonemealAgeIncrease(world);
+    public void applyGrowth(World world, BlockPos pos, BlockState state) {
+        int i = this.getAge(state) + this.getGrowthAmount(world);
         int j = this.getMaxAge();
         if (i > j) {
             i = j;
@@ -119,16 +117,16 @@ public class HempBlock extends CropBlock {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader blockReader, BlockPos pos, ISelectionContext selectionContext) {
-        return Block.makeCuboidShape(4, 0, 4, 12.0d, 4.0d * (state.get(getAgeProperty()) + 1), 12.0d);
+    public VoxelShape getOutlineShape(BlockState state, BlockView blockReader, BlockPos pos, EntityContext selectionContext) {
+        return Block.createCuboidShape(4, 0, 4, 12.0d, 4.0d * (state.get(getAgeProperty()) + 1), 12.0d);
     }
 
     @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(new IProperty[]{HEMP_AGE});
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(HEMP_AGE);
     }
 
     static {
-        HEMP_AGE = BlockStateProperties.AGE_0_3;
+        HEMP_AGE = Properties.AGE_3;
     }
 }

@@ -47,7 +47,8 @@ public class CrateTempBlock extends BlockWithEntity {
         return ActionResult.SUCCESS;
     }
 
-    public void onReplaced(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    @Override
+    public void onBlockRemoved(BlockState state, World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) {
             BlockEntity tileentity = worldIn.getBlockEntity(pos);
             if (tileentity instanceof Inventory) {
@@ -55,7 +56,7 @@ public class CrateTempBlock extends BlockWithEntity {
                 worldIn.updateNeighborsAlways(pos, this);
             }
 
-            super.onReplaced(state, worldIn, pos, newState, isMoving);
+            super.onBlockRemoved(state, worldIn, pos, newState, isMoving);
         }
 
     }
@@ -76,11 +77,13 @@ public class CrateTempBlock extends BlockWithEntity {
     }
 
     /** @deprecated */
+    @Override
     public BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
     }
 
-    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    @Override
+    public void onPlaced(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         if (stack.hasCustomName()) {
             BlockEntity tileentity = worldIn.getBlockEntity(pos);
             if (tileentity instanceof CrateTileEntity) {
@@ -91,12 +94,14 @@ public class CrateTempBlock extends BlockWithEntity {
     }
 
     /** @deprecated */
-    public boolean hasComparatorInputOverride(BlockState state) {
+    @Override
+    public boolean hasComparatorOutput(BlockState state) {
         return true;
     }
 
     /** @deprecated */
-    public int getComparatorInputOverride(BlockState blockState, World worldIn, BlockPos pos) {
+    @Override
+    public int getComparatorOutput(BlockState blockState, World worldIn, BlockPos pos) {
         return Container.calculateComparatorOutput(worldIn.getBlockEntity(pos));
     }
 

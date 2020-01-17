@@ -2,37 +2,35 @@ package com.vulp.druidcraft.client.renders;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.vulp.druidcraft.Druidcraft;
-import com.vulp.druidcraft.DruidcraftRegistry;
 import com.vulp.druidcraft.client.models.DreadfishEntityModel;
 import com.vulp.druidcraft.entities.DreadfishEntity;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.util.ResourceLocation;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
+import net.minecraft.client.render.entity.MobEntityRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.registry.IRenderFactory;
 
-@OnlyIn(Dist.CLIENT)
-public class DreadfishEntityRender extends MobRenderer<DreadfishEntity, DreadfishEntityModel>
+@Environment(EnvType.CLIENT)
+public class DreadfishEntityRender extends MobEntityRenderer<DreadfishEntity, DreadfishEntityModel>
 {
-    private static final ResourceLocation DREADFISH_HEALTH_FULL = new ResourceLocation(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_0.png");
-    private static final ResourceLocation DREADFISH_HEALTH_HIGH = new ResourceLocation(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_1.png");
-    private static final ResourceLocation DREADFISH_HEALTH_MEDIUM = new ResourceLocation(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_2.png");
-    private static final ResourceLocation DREADFISH_HEALTH_LOW = new ResourceLocation(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_3.png");
+    private static final Identifier DREADFISH_HEALTH_FULL = new Identifier(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_0.png");
+    private static final Identifier DREADFISH_HEALTH_HIGH = new Identifier(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_1.png");
+    private static final Identifier DREADFISH_HEALTH_MEDIUM = new Identifier(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_2.png");
+    private static final Identifier DREADFISH_HEALTH_LOW = new Identifier(Druidcraft.MODID, "textures/entity/dreadfish/dreadfish_3.png");
 
-    public DreadfishEntityRender(EntityRendererManager manager)
+    public DreadfishEntityRender(EntityRenderDispatcher manager)
     {
         super(manager, new DreadfishEntityModel(), 0.4f);
     }
 
     @Override
-    protected ResourceLocation getEntityTexture(DreadfishEntity entity) {
+    public Identifier getTexture(DreadfishEntity entity) {
         if (entity.isTamed()) {
-            if (entity.getHealth() >= entity.getMaxHealth()) {
+            if (entity.getHealth() >= entity.getMaximumHealth()) {
                 return DREADFISH_HEALTH_FULL;
-            } else if ((entity.getHealth() < entity.getMaxHealth()) && (entity.getHealth() >= 16.0f)) {
+            } else if ((entity.getHealth() < entity.getMaximumHealth()) && (entity.getHealth() >= 16.0f)) {
                 return DREADFISH_HEALTH_HIGH;
             } else if ((entity.getHealth() < 16.0f) && (entity.getHealth() >= 8.0f)) {
                 return DREADFISH_HEALTH_MEDIUM;
@@ -44,18 +42,9 @@ public class DreadfishEntityRender extends MobRenderer<DreadfishEntity, Dreadfis
         else return DREADFISH_HEALTH_FULL;
     }
 
-    public static class RenderFactory implements IRenderFactory<DreadfishEntity>
-    {
-        @Override
-        public EntityRenderer<? super DreadfishEntity> createRenderFor(EntityRendererManager manager)
-        {
-            return new DreadfishEntityRender(manager);
-        }
-    }
-
     @Override
-    protected void applyRotations(DreadfishEntity entityLiving, float ageInTicks, float rotationYaw, float partialTicks) {
-        super.applyRotations(entityLiving, ageInTicks, rotationYaw, partialTicks);
+    protected void setupTransforms(DreadfishEntity entityLiving, MatrixStack stack, float ageInTicks, float rotationYaw, float partialTicks) {
+        super.setupTransforms(entityLiving, stack, ageInTicks, rotationYaw, partialTicks);
         float f = 1.0F;
         float f1 = 1.0F;
         float f2 = f * 4.3F * MathHelper.sin(f1 * 0.6F * ageInTicks);

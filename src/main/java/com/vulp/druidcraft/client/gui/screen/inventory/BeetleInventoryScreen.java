@@ -9,9 +9,8 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
-import javax.xml.soap.Text;
 
 @Environment(EnvType.CLIENT)
 public class BeetleInventoryScreen extends AbstractInventoryScreen<BeetleInventoryContainer> {
@@ -20,8 +19,8 @@ public class BeetleInventoryScreen extends AbstractInventoryScreen<BeetleInvento
     private float mousePosx;
     private float mousePosY;
 
-    public BeetleInventoryScreen(BeetleInventoryContainer container, PlayerInventory inventory, Text text) {
-        super(container, inventory, container.getBeetle().getDisplayName());
+    public BeetleInventoryScreen(int syncId, PlayerInventory inventory, Text text, int beetleId) {
+        super(new BeetleInventoryContainer(syncId, inventory, beetleId), inventory, text);
         this.width = 257;
         this.height = 238;
         this.beetleEntity = container.getBeetle();

@@ -4,7 +4,7 @@ import com.vulp.druidcraft.Druidcraft;
 import com.vulp.druidcraft.entities.AI.goals.NonTamedTargetGoalMonster;
 import com.vulp.druidcraft.entities.AI.goals.OwnerHurtByTargetGoalMonster;
 import com.vulp.druidcraft.entities.AI.goals.OwnerHurtTargetGoalMonster;
-import com.vulp.druidcraft.events.EventFactory;
+import com.vulp.druidcraft.events.TameMonsterCallback;
 import com.vulp.druidcraft.inventory.container.BeetleInventoryContainer;
 import com.vulp.druidcraft.registry.ItemRegistry;
 import net.fabricmc.fabric.api.container.ContainerProviderRegistry;
@@ -34,7 +34,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -43,7 +42,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.Random;
@@ -269,7 +267,7 @@ public class BeetleEntity extends TameableMonsterEntity implements InventoryList
                     }
 
                     if (!this.world.isClient) {
-                        if (this.random.nextInt(3) == 0 && !EventFactory.onMonsterTame(this, player)) {
+                        if (this.random.nextInt(3) == 0 && TameMonsterCallback.EVENT.invoker().onTameMonster(this, player).isAccepted()) {
                             this.playTameEffect(true);
                             this.setTamedBy(player);
                             this.navigation.stop();
@@ -338,16 +336,20 @@ public class BeetleEntity extends TameableMonsterEntity implements InventoryList
     @Nullable
     @Override
     public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-        return new BeetleInventoryContainer(i, playerInventory, beetleChest, this.getEntityId());
+        return new BeetleInventoryContainer(i, playerInventory, this.getEntityId());
     }
 
     private void openGUI(PlayerEntity playerEntity) {
         if (!this.world.isClient && (!this.hasPassengers() || this.hasPassenger(playerEntity)) && this.isTamed()) {
             ContainerProviderRegistry.INSTANCE.openContainer(new Identifier(Druidcraft.MODID, "beetle_inv"), playerEntity, packetByteBuf -> {
                 packetByteBuf.writeInt(this.getEntityId());
-                packetByteBuf.writeInt(this.getInventorySize());
+                packetByteBuf.writeText(this.getName());
             });
         }
+    }
+
+    public Inventory getInventory() {
+        return beetleChest;
     }
 
     private void initBeetleChest() {
@@ -444,7 +446,7 @@ public class BeetleEntity extends TameableMonsterEntity implements InventoryList
 
                 if (this.canBeControlledByRider()) {
                     this.setMovementSpeed((float)this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED).getValue());
-                    super.travel(new Vec3d((double)f, vec.y, (double)f1));
+                    super.travel(new Vec3d(f, vec.y, f1));
                 } else if (livingentity instanceof PlayerEntity) {
                     this.setVelocity(Vec3d.ZERO);
                 }
