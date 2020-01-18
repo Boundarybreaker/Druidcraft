@@ -22,6 +22,8 @@ public class ElderTree extends SaplingGenerator {
         return Feature.NORMAL_TREE.configure(new BranchedTreeFeatureConfig.Builder(new SimpleStateProvider(BlockRegistry.elder_log.getDefaultState()),
                 new SimpleStateProvider(BlockRegistry.elder_leaves.getDefaultState()),
                 new BlobFoliagePlacer(2, 0))
+                .baseHeight(5)
+                .noVines()
                 .build());
     }
 }

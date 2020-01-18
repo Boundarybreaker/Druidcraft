@@ -5,7 +5,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.particle.DefaultParticleType;
-import net.minecraft.particle.ParticleType;
 
 public class ParticleRegistry {
     public static final DefaultParticleType magic_smoke = new CustomParticleType(false);

@@ -29,6 +29,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleType;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.DyeColor;
@@ -310,7 +312,11 @@ public class DruidcraftRegistry {
     // PARTICLE REGISTRATION
     public static void onParticleRegistry()
     {
-        ParticleRegistry.registerFactories();
+        register(ParticleRegistry.magic_smoke, "magic_smoke");
+        register(ParticleRegistry.fiery_glow, "fiery_glow");
+        register(ParticleRegistry.fiery_spark, "fiery_spark");
+        register(ParticleRegistry.magic_mist, "magic_mist");
+        register(ParticleRegistry.magic_glitter, "magic_glitter");
 
         LOGGER.info("Particles registered.");
     }
@@ -344,7 +350,6 @@ public class DruidcraftRegistry {
     // FEATURE REGISTRATION
     public static void onFeatureRegistry()
     {
-
         FeatureRegistry.elder_tree = register(new OakTreeFeature(BranchedTreeFeatureConfig::deserialize2), "elder_tree");
         FeatureRegistry.blueberry_bush = register(new RandomPatchFeature(RandomPatchFeatureConfig::deserialize), "blueberry_bush");
 
@@ -393,6 +398,10 @@ public class DruidcraftRegistry {
 
     public static <T extends FeatureConfig> Feature<T> register(Feature<T> feature, String name) {
         return Registry.register(Registry.FEATURE, new Identifier(Druidcraft.MODID, name), feature);
+    }
+
+    public static <T extends ParticleEffect> ParticleType<T> register(ParticleType<T> particle, String name) {
+        return Registry.register(Registry.PARTICLE_TYPE, new Identifier(Druidcraft.MODID, name), particle);
     }
 
 }
