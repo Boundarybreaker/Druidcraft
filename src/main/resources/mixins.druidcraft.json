@@ -3,9 +3,11 @@
   "package": "com.vulp.druidcraft.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinAxeItem",
     "MixinCraftingInventory",
     "MixinCraftingResultSlot",
     "MixinCriterions",
-    "MixinPlayerContainer"
+    "MixinPlayerContainer",
+    "MixinSpawnRestriction"
   ]
 }

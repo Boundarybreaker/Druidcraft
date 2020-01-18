@@ -1,13 +1,14 @@
 package com.vulp.druidcraft.config;
 
-import blue.endless.jankson.*;
+import blue.endless.jankson.Jankson;
+import blue.endless.jankson.JsonElement;
+import blue.endless.jankson.JsonGrammar;
+import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.api.SyntaxError;
 import com.vulp.druidcraft.Druidcraft;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Configuration
 {
@@ -15,7 +16,8 @@ public class Configuration
     private static final Jankson JANKSON = Jankson.builder().build();
 
     public static void sync() {
-        File configFile = new File("config/thehallow.json5");
+        File configFile = new File("config/druidcraft.json5");
+        configFile.getParentFile().mkdirs();
         JsonObject config = new JsonObject();
         if(configFile.exists()) {
             try {

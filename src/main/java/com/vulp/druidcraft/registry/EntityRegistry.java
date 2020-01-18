@@ -6,20 +6,19 @@ import com.vulp.druidcraft.config.EntitySpawnConfig;
 import com.vulp.druidcraft.entities.BeetleEntity;
 import com.vulp.druidcraft.entities.DreadfishEntity;
 import com.vulp.druidcraft.entities.LunarMothEntity;
+import com.vulp.druidcraft.mixin.MixinSpawnRestriction;
 import net.fabricmc.fabric.api.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.Heightmap;
-import net.minecraftforge.common.BiomeDictionary;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EntityRegistry
 {
@@ -49,8 +48,8 @@ public class EntityRegistry
         registerEntityWorldSpawn(EntitySpawnConfig.dreadfish_spawn, dreadfish_entity, EntityCategory.MONSTER, EntitySpawnConfig.dreadfish_weight, EntitySpawnConfig.dreadfish_min_group, EntitySpawnConfig.dreadfish_max_group, EntitySpawnConfig.dreadfish_biome_types, EntitySpawnConfig.dreadfish_biome_exclusions);
         registerEntityWorldSpawn(EntitySpawnConfig.beetle_spawn, beetle_entity, EntityCategory.MONSTER, EntitySpawnConfig.beetle_weight, EntitySpawnConfig.beetle_min_group, EntitySpawnConfig.beetle_max_group, EntitySpawnConfig.beetle_biome_types, EntitySpawnConfig.beetle_biome_exclusions);
 
-        EntitySpawnPlacementRegistry.register(beetle_entity, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::placement);
-        EntitySpawnPlacementRegistry.register(dreadfish_entity, EntitySpawnPlacementRegistry.PlacementType.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, DreadfishEntity::placement);
+        MixinSpawnRestriction.invokeRegister(beetle_entity, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::placement);
+        MixinSpawnRestriction.invokeRegister(dreadfish_entity, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, DreadfishEntity::placement);
     }
 
     public static Item registerEntitySpawnEgg(EntityType<?> type, int color1, int color2, String name)
@@ -62,21 +61,21 @@ public class EntityRegistry
     public static void registerEntityWorldSpawn(boolean spawnEnabled, EntityType<?> entity, EntityCategory classification, int weight, int minGroupCountIn, int maxGroupCountIn, List<String> biomes, List<String> exclusions) {
         Set<Biome> biomeSet = new HashSet<>();
 
+        //TODO: biome tags instead
         if (spawnEnabled) {
             for (String biomeName : biomes) {
-                biomeSet.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.getType(biomeName)));
+//                biomeSet.addAll(BiomeDictionary.getBiomes(BiomeDictionary.Type.getType(biomeName)));
             }
-            Set<BiomeDictionary.Type> exclusionTypes = exclusions.stream().filter(o -> !o.isEmpty()).map(BiomeDictionary.Type::getType).collect(Collectors.toCollection(HashSet::new));
-            biomeSet.forEach(o -> {
-                    for (BiomeDictionary.Type type : exclusionTypes) {
-                        if (BiomeDictionary.hasType(o, type)) {
-                            return;
-                        }
-                    }
-                    o.getSpawns(classification).add(new Biome.SpawnListEntry(entity, weight, minGroupCountIn, maxGroupCountIn));
+//            Set<BiomeDictionary.Type> exclusionTypes = exclusions.stream().filter(o -> !o.isEmpty()).map(BiomeDictionary.Type::getType).collect(Collectors.toCollection(HashSet::new));
+            Registry.BIOME.forEach(o -> {
+//                    for (BiomeDictionary.Type type : exclusionTypes) {
+//                        if (BiomeDictionary.hasType(o, type)) {
+//                            return;
+//                        }
+//                    }
+                    o.getEntitySpawnList(classification).add(new Biome.SpawnEntry(entity, weight, minGroupCountIn, maxGroupCountIn));
                 });
         }
 
-        biomeSet.clear();
     }
 }

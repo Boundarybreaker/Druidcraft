@@ -1,41 +1,65 @@
 package com.vulp.druidcraft.world.biomes;
 
-import com.vulp.druidcraft.Druidcraft;
-import com.vulp.druidcraft.registry.BiomeRegistry;
+import com.google.common.collect.ImmutableList;
 import com.vulp.druidcraft.registry.BlockRegistry;
-import com.vulp.druidcraft.world.features.DarkwoodTreeFeature;
-import com.vulp.druidcraft.world.features.MegaDarkwoodTreeFeature;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.GenerationStage;
+import net.minecraft.world.gen.GenerationStep;
+import net.minecraft.world.gen.decorator.CountExtraChanceDecoratorConfig;
+import net.minecraft.world.gen.decorator.Decorator;
 import net.minecraft.world.gen.feature.*;
-import net.minecraft.world.gen.placement.AtSurfaceWithExtraConfig;
-import net.minecraft.world.gen.placement.Placement;
-import net.minecraft.world.gen.stateprovider.BlockStateProvider;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.registries.IForgeRegistry;
-
-import java.util.Random;
+import net.minecraft.world.gen.foliage.SpruceFoliagePlacer;
+import net.minecraft.world.gen.stateprovider.SimpleStateProvider;
 
 public class BiomeFeatures {
 
-    public static Random rand = new Random();
-    public static final Feature<BranchedTreeFeatureConfig> darkwood_tree = new DarkwoodTreeFeature(BranchedTreeFeatureConfig::deserialize2, true);
-    public static final Feature<MegaTreeFeatureConfig> mega_darkwood_tree = new MegaDarkwoodTreeFeature(MegaTreeFeatureConfig::method_23408, false, rand.nextBoolean());
+    public static final Feature<BranchedTreeFeatureConfig> darkwood_tree = new OakTreeFeature(BranchedTreeFeatureConfig::deserialize2);
+    public static final Feature<MegaTreeFeatureConfig> mega_darkwood_tree = new MegaPineTreeFeature(MegaTreeFeatureConfig::method_23408);
     public static final Feature<TreeFeatureConfig> darkwood_shrubs = new JungleGroundBushFeature(TreeFeatureConfig::deserialize);
 
-    @SubscribeEvent
-    public static void registerFeatures(RegistryEvent.Register<Feature<?>> event) {
-        IForgeRegistry<Feature<?>> registry = event.getRegistry();
+    public static final BranchedTreeFeatureConfig darkwood_tree_config = new BranchedTreeFeatureConfig.Builder(
+            new SimpleStateProvider(BlockRegistry.darkwood_log.getDefaultState()),
+            new SimpleStateProvider(BlockRegistry.darkwood_leaves.getDefaultState()),
+            new SpruceFoliagePlacer(1, 0)
+    ).build();
 
-        registry.register(darkwood_tree.setRegistryName(Druidcraft.MODID, "darkwood_tree"));
-    }
+    public static final MegaTreeFeatureConfig mega_darkwood_tree_config = new MegaTreeFeatureConfig.Builder(
+            new SimpleStateProvider(BlockRegistry.darkwood_log.getDefaultState()),
+            new SimpleStateProvider(BlockRegistry.darkwood_leaves.getDefaultState())
+    ).build();
 
-    public static void addDarkwoodTrees(Biome biomeIn) {
-        biomeIn.addFeature(GenerationStage.Decoration.VEGETAL_DECORATION, Biome.createDecoratedFeature(Feature.RANDOM_SELECTOR, new MultipleRandomFeatureConfig(new Feature[]{darkwood_tree}, new IFeatureConfig[]{IFeatureConfig.NO_FEATURE_CONFIG}, new float[]{0.5F}, mega_darkwood_tree, IFeatureConfig.NO_FEATURE_CONFIG), Placement.COUNT_EXTRA_HEIGHTMAP, new AtSurfaceWithExtraConfig(12, 0.2F, 3)));
+    public static void addDarkwoodTrees(Biome biome) {
+        biome.addFeature(
+                GenerationStep.Feature.VEGETAL_DECORATION,
+                Feature.RANDOM_SELECTOR.configure(
+                        new RandomFeatureConfig(
+                                ImmutableList.of(
+                                        mega_darkwood_tree.configure(mega_darkwood_tree_config)
+                                                .withChance(0.33333334F),
+                                        darkwood_tree.configure(darkwood_tree_config)
+                                                .withChance(0.33333334F)
+                                ),
+                               darkwood_tree.configure(darkwood_tree_config)
+                        )
+                ).createDecoratedFeature(
+                        Decorator.COUNT_EXTRA_HEIGHTMAP.configure(
+                                new CountExtraChanceDecoratorConfig(12, 0.2F, 3)
+                        )
+                )
+        );
     }
 
     public static void addDarkwoodShrubs(Biome biomeIn) {
-        biomeIn.addFeature(GenerationStage.Decoration.VEGETAL_DECORATION, Biome.createDecoratedFeature(darkwood_shrubs, new TreeFeatureConfig.Builder(new BlockStateProvider(BlockRegistry.darkwood_log), new BlockStateProvider(BlockRegistry.darkwood_leaves)), Placement.COUNT_EXTRA_HEIGHTMAP, new AtSurfaceWithExtraConfig(5, 0.3F, 2)));
+        biomeIn.addFeature(GenerationStep.Feature.VEGETAL_DECORATION,
+                darkwood_shrubs.configure(
+                        new TreeFeatureConfig.Builder(
+                                new SimpleStateProvider(BlockRegistry.darkwood_log.getDefaultState()),
+                                new SimpleStateProvider(BlockRegistry.darkwood_leaves.getDefaultState()))
+                                .build()
+                ).createDecoratedFeature(
+                        Decorator.COUNT_EXTRA_HEIGHTMAP.configure(
+                                new CountExtraChanceDecoratorConfig(5, 0.3F, 2)
+                        )
+                )
+        );
     }
 }

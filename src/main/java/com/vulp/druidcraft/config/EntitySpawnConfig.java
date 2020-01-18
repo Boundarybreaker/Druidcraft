@@ -24,9 +24,9 @@ public class EntitySpawnConfig {
     public static int beetle_min_group = 1;
     public static int beetle_max_group = 2;
     //TODO: change for Fabric? Original vals: CONIFEROUS, FOREST, JUNGLE, DENSE
-    public static List<String> beetle_biome_types;
+    public static List<String> beetle_biome_types = new ArrayList<>();
     //TODO: change for Fabric? Original vals: <empty>
-    public static List<String> beetle_biome_exclusions;
+    public static List<String> beetle_biome_exclusions = new ArrayList<>();
     
     public static void load(JsonObject json) {
         dreadfish_spawn = json.getBoolean("dreadfish_spawn", dreadfish_spawn);

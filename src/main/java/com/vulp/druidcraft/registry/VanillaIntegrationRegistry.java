@@ -1,18 +1,13 @@
 package com.vulp.druidcraft.registry;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
+import com.vulp.druidcraft.mixin.MixinAxeItem;
+import net.fabricmc.fabric.api.registry.CompostingChanceRegistry;
+import net.fabricmc.fabric.api.registry.FlammableBlockRegistry;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ComposterBlock;
-import net.minecraft.block.FireBlock;
-import net.minecraft.item.AxeItem;
-import net.minecraft.stats.IStatFormatter;
-import net.minecraft.stats.Stats;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
-import net.minecraftforge.common.data.ForgeBlockTagsProvider;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class VanillaIntegrationRegistry {
 
@@ -22,10 +17,10 @@ public class VanillaIntegrationRegistry {
         addStrippable(BlockRegistry.darkwood_wood, BlockRegistry.stripped_darkwood_wood);
 
         // COMPOSTER ITEMS
-        ComposterBlock.CHANCES.put(ItemRegistry.hemp_seeds, 0.3f);
-        ComposterBlock.CHANCES.put(ItemRegistry.hemp, 0.65f);
-        ComposterBlock.CHANCES.put(ItemRegistry.darkwood_sapling, 0.3f);
-        ComposterBlock.CHANCES.put(ItemRegistry.darkwood_leaves, 0.3f);
+        CompostingChanceRegistry.INSTANCE.add(ItemRegistry.hemp_seeds, 0.3f);
+        CompostingChanceRegistry.INSTANCE.add(ItemRegistry.hemp, 0.65f);
+        CompostingChanceRegistry.INSTANCE.add(ItemRegistry.darkwood_sapling, 0.3f);
+        CompostingChanceRegistry.INSTANCE.add(ItemRegistry.darkwood_leaves, 0.3f);
 
         // FLAMMABLES
         addFlammables(BlockRegistry.hemp_crop, 60, 100);
@@ -61,12 +56,12 @@ public class VanillaIntegrationRegistry {
 
     public static void addFlammables(Block blockIn, int encouragement, int flammability)
     {
-        FireBlock fireblock = (FireBlock) Blocks.FIRE;
-        fireblock.setFireInfo(blockIn, encouragement, flammability);
+        FlammableBlockRegistry.getDefaultInstance().add(blockIn, encouragement, flammability);
     }
 
     private static void addStrippable(Block unstrippedBlock, Block strippedBlock) {
-        AxeItem.BLOCK_STRIPPING_MAP = Maps.newHashMap(AxeItem.BLOCK_STRIPPING_MAP);
-        AxeItem.BLOCK_STRIPPING_MAP.put(unstrippedBlock, strippedBlock);
+        Map<Block, Block> axeMap = new HashMap<>(MixinAxeItem.getSTRIPPED_BLOCKS());
+        axeMap.put(unstrippedBlock, strippedBlock);
+        MixinAxeItem.setSTRIPPED_BLOCKS(ImmutableMap.copyOf(axeMap));
     }
 }

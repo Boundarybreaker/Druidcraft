@@ -36,6 +36,6 @@ public class RenderRegistry
             return new BeetleInventoryScreen(syncid, player.inventory, label, beetleId);
         });
 
-        BlockRenderLayerMap.INSTANCE.putBlocks(RenderLayer.getCutout(), BlockRegistry.rope_lantern, BlockRegistry.rope, BlockRegistry.ceramic_lantern);
+        BlockRenderLayerMap.INSTANCE.putBlocks(RenderLayer.getCutout(), BlockRegistry.rope_lantern, BlockRegistry.rope, BlockRegistry.ceramic_lantern, BlockRegistry.blueberry_bush);
     }
 }

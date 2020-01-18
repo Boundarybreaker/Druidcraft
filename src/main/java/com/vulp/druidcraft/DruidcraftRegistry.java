@@ -15,11 +15,10 @@ import com.vulp.druidcraft.entities.LunarMothColors;
 import com.vulp.druidcraft.items.*;
 import com.vulp.druidcraft.registry.*;
 import com.vulp.druidcraft.world.biomes.DarkwoodForest;
-import com.vulp.druidcraft.world.features.BerryBushFeature;
-import com.vulp.druidcraft.world.features.ElderTreeFeature;
 import net.fabricmc.fabric.api.biomes.v1.OverworldBiomes;
 import net.fabricmc.fabric.api.biomes.v1.OverworldClimate;
 import net.fabricmc.fabric.api.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.container.ContainerFactory;
 import net.fabricmc.fabric.api.container.ContainerProviderRegistry;
 import net.fabricmc.fabric.api.tools.FabricToolTags;
@@ -37,8 +36,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
-import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
-import net.minecraft.world.gen.feature.DefaultFeatureConfig;
+import net.minecraft.world.gen.feature.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,7 +44,7 @@ public class DruidcraftRegistry {
 
     public static final String MODID = "druidcraft";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
-    public static final ItemGroup DRUIDCRAFT = new DruidcraftItemGroup();
+    public static final ItemGroup DRUIDCRAFT = FabricItemGroupBuilder.build(new Identifier(MODID, "druidcraft"), () -> new ItemStack(ItemRegistry.hemp));
 
     // ITEM REGISTRATION
     public static void onItemsRegistry()
@@ -346,8 +344,8 @@ public class DruidcraftRegistry {
     public static void onFeatureRegistry()
     {
 
-        FeatureRegistry.elder_tree = FeatureRegistry.register(new ElderTreeFeature(BranchedTreeFeatureConfig::deserialize2), "elder_tree");
-        FeatureRegistry.blueberry_bush = FeatureRegistry.register(new BerryBushFeature(DefaultFeatureConfig::deserialize, BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)), "blueberry_bush");
+        FeatureRegistry.elder_tree = register(new OakTreeFeature(BranchedTreeFeatureConfig::deserialize2), "elder_tree");
+        FeatureRegistry.blueberry_bush = register(new RandomPatchFeature(RandomPatchFeatureConfig::deserialize), "blueberry_bush");
 
         FeatureRegistry.spawnFeatures();
         LOGGER.info("Features registered.");
@@ -356,7 +354,6 @@ public class DruidcraftRegistry {
     // BIOME REGISTRATION
     public static void onBiomeRegistry()
     {
-        //TODO: biome stuff
         BiomeRegistry.darkwood_forest = register(new DarkwoodForest(), "darkwood_forest");
 
         OverworldBiomes.addContinentalBiome(BiomeRegistry.darkwood_forest, OverworldClimate.COOL, 1);
@@ -381,7 +378,7 @@ public class DruidcraftRegistry {
         return Registry.register(Registry.SOUND_EVENT, new Identifier(Druidcraft.MODID, name), event);
     }
 
-    public static EntityType register(EntityType entity, String name) {
+    public static <T extends Entity> EntityType<T> register(EntityType<T> entity, String name) {
         return Registry.register(Registry.ENTITY_TYPE, new Identifier(Druidcraft.MODID, name), entity);
     }
 
@@ -393,8 +390,8 @@ public class DruidcraftRegistry {
         ContainerProviderRegistry.INSTANCE.registerFactory(new Identifier(Druidcraft.MODID, name), factory);
     }
 
-    public static <T extends Entity> EntityType<T> reister(EntityType<T> entity, String name) {
-        return Registry.register(Registry.ENTITY_TYPE, new Identifier(Druidcraft.MODID, name), entity);
+    public static <T extends FeatureConfig> Feature<T> register(Feature<T> feature, String name) {
+        return Registry.register(Registry.FEATURE, new Identifier(Druidcraft.MODID, name), feature);
     }
 
 }

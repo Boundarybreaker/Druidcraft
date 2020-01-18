@@ -60,7 +60,7 @@ public class KnifeItem extends Item {
         return Util.next(itr, current);
     }
 
-    @Environment(EnvType.CLIENT.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World worldIn, List<Text> tooltip, TooltipContext flagIn) {
         if (worldIn == null) return;

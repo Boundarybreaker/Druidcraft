@@ -107,7 +107,7 @@ public class FieryGlowParticle extends SpriteBillboardParticle {
         return j | k << 16;
     }
 
-    @Environment(EnvType.CLIENT.CLIENT)
+    @Environment(EnvType.CLIENT)
     public static class Factory implements ParticleFactory<DefaultParticleType> {
         private final SpriteProvider spriteSet;
 
