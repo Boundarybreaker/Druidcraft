@@ -205,7 +205,7 @@ public class DruidcraftRegistry {
         BlockRegistry.rockroot_block = register(new Block(FabricBlockSettings.of(Material.STONE).strength(3.0f, 3.0f).breakByTool(FabricToolTags.PICKAXES, 0).sounds(BlockSoundGroup.STONE).build()), "rockroot_block");
         BlockRegistry.darkwood_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.of(Material.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "darkwood_log");
         BlockRegistry.stripped_darkwood_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.copy(BlockRegistry.darkwood_log).build()), "stripped_darkwood_log");
-        BlockRegistry.darkwood_leaves = register(new LeavesBlock(FabricBlockSettings.of(Material.LEAVES).strength(0.2f, 0.2f).ticksRandomly().sounds(BlockSoundGroup.GRASS).build()), "darkwood_leaves");
+        BlockRegistry.darkwood_leaves = register(new LeavesBlock(FabricBlockSettings.of(Material.LEAVES).nonOpaque().strength(0.2f, 0.2f).ticksRandomly().sounds(BlockSoundGroup.GRASS).build()), "darkwood_leaves");
         BlockRegistry.darkwood_sapling = register(new SaplingBlock(new DarkwoodTree(), FabricBlockSettings.of(Material.PLANT).strength(0.0f, 0.0f).noCollision().sounds(BlockSoundGroup.GRASS).build()), "darkwood_sapling");
         BlockRegistry.potted_darkwood_sapling = register(new FlowerPotBlock(BlockRegistry.darkwood_sapling, FabricBlockSettings.of(Material.PART).strength(0.0f, 0.0f).sounds(BlockSoundGroup.STONE).build()), "potted_darkwood_sapling");
         BlockRegistry.darkwood_planks = register(new Block(FabricBlockSettings.of(Material.WOOD).strength(2.0F, 3.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "darkwood_planks");
@@ -225,7 +225,7 @@ public class DruidcraftRegistry {
         BlockRegistry.elder_fruit = register(new ElderFruitBlock(FabricBlockSettings.of(Material.PLANT).strength(0.0f, 0.0f).noCollision().sounds(BlockSoundGroup.GRASS).ticksRandomly().build()), "elder_fruit");
         BlockRegistry.elder_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.of(Material.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "elder_log");
         BlockRegistry.elder_wood = register(new PillarBlock(FabricBlockSettings.copy(BlockRegistry.elder_log).build()), "elder_wood");
-        BlockRegistry.elder_leaves = register(new ElderLeavesBlock(FabricBlockSettings.of(Material.LEAVES).strength(0.2f, 0.2f).ticksRandomly().sounds(BlockSoundGroup.GRASS).build()), "elder_leaves");
+        BlockRegistry.elder_leaves = register(new ElderLeavesBlock(FabricBlockSettings.of(Material.LEAVES).nonOpaque().strength(0.2f, 0.2f).ticksRandomly().sounds(BlockSoundGroup.GRASS).build()), "elder_leaves");
 
         BlockRegistry.oak_beam = register(new PillarBlock(FabricBlockSettings.of(Material.WOOD).sounds(BlockSoundGroup.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).build()), "oak_beam");
         BlockRegistry.spruce_beam = register(new PillarBlock(FabricBlockSettings.of(Material.WOOD).sounds(BlockSoundGroup.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).build()), "spruce_beam");

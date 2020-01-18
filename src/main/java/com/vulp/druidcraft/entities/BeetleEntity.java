@@ -349,6 +349,9 @@ public class BeetleEntity extends TameableMonsterEntity implements InventoryList
     }
 
     public Inventory getInventory() {
+        if (beetleChest == null || beetleChest.getInvSize() != getInventorySize()) {
+            initBeetleChest();
+        }
         return beetleChest;
     }
 

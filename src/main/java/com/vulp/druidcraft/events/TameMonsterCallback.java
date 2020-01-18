@@ -12,7 +12,7 @@ public interface TameMonsterCallback {
 			ActionResult result = event.onTameMonster(monster, tamer);
 			if (result != ActionResult.PASS) return result;
 		}
-		return ActionResult.PASS;
+		return ActionResult.SUCCESS;
 	});
 
 	ActionResult onTameMonster(TameableMonsterEntity monster, PlayerEntity tamer);

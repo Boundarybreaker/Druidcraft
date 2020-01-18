@@ -21,8 +21,8 @@ public class BeetleInventoryScreen extends AbstractInventoryScreen<BeetleInvento
 
     public BeetleInventoryScreen(int syncId, PlayerInventory inventory, Text text, int beetleId) {
         super(new BeetleInventoryContainer(syncId, inventory, beetleId), inventory, text);
-        this.width = 257;
-        this.height = 238;
+        this.containerWidth = 257;
+        this.containerHeight = 238;
         this.beetleEntity = container.getBeetle();
         this.passEvents = false;
     }
@@ -37,14 +37,14 @@ public class BeetleInventoryScreen extends AbstractInventoryScreen<BeetleInvento
     protected void drawBackground(float partialTicks, int mouseX, int mouseY) {
         GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         this.minecraft.getTextureManager().bindTexture(BEETLE_GUI_TEXTURES);
-        int i = (this.width - this.width) / 2;
-        int j = (this.height - this.height) / 2;
-        this.blit(i, j, 0, 0, this.width, this.height);
+        int i = (this.width - this.containerWidth) / 2;
+        int j = (this.height - this.containerHeight) / 2;
+        this.blit(i, j, 0, 0, this.containerWidth, this.containerHeight);
         if (this.beetleEntity instanceof BeetleEntity) {
             BeetleEntity beetleEntity = this.beetleEntity;
             if (beetleEntity.hasChest()) {
                 for (int k = 0; k < 7; k++) {
-                    this.blit(i + 84, j + 17 + (k * 18), 0, this.height, 162, 18);
+                    this.blit(i + 84, j + 17 + (k * 18), 0, this.containerHeight, 162, 18);
                 }
             }
         }
