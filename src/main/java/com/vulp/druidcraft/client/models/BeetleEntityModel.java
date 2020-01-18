@@ -149,9 +149,9 @@ public class BeetleEntityModel<T extends BeetleEntity> extends AnimalModel<T> {
     }
 
     private void rotationAngles(ModelPart rendererModel, float x, float y, float z) {
-        rendererModel.roll = x;
-        rendererModel.pitch = y;
-        rendererModel.yaw = z;
+        rendererModel.pitch = x;
+        rendererModel.yaw = y;
+        rendererModel.roll = z;
     }
 
     @Override

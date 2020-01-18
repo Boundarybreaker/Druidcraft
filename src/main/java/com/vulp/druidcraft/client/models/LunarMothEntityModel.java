@@ -53,9 +53,9 @@ public class LunarMothEntityModel<T extends LunarMothEntity> extends EntityModel
     }
 
     public void setRotationAngle(ModelPart modelRenderer, float x, float y, float z) {
-        modelRenderer.roll = x;
-        modelRenderer.pitch = y;
-        modelRenderer.yaw = z;
+        modelRenderer.pitch = x;
+        modelRenderer.yaw = y;
+        modelRenderer.roll = z;
     }
 
     @Override

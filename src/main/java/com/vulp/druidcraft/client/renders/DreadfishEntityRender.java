@@ -1,6 +1,5 @@
 package com.vulp.druidcraft.client.renders;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.vulp.druidcraft.Druidcraft;
 import com.vulp.druidcraft.client.models.DreadfishEntityModel;
 import com.vulp.druidcraft.entities.DreadfishEntity;
@@ -9,6 +8,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.MobEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 
@@ -48,7 +48,9 @@ public class DreadfishEntityRender extends MobEntityRenderer<DreadfishEntity, Dr
         float f = 1.0F;
         float f1 = 1.0F;
         float f2 = f * 4.3F * MathHelper.sin(f1 * 0.6F * ageInTicks);
-        GlStateManager.rotatef(f2, 0.0F, 1.0F, 0.0F);
-        GlStateManager.translatef(0.0F, 0.0F, -0.4F);
+        stack.push();
+        stack.translate(0.0F, 0.0F, -0.4F);
+        stack.multiply(Vector3f.POSITIVE_Y.getDegreesQuaternion(f2));
+        stack.pop();
     }
 }
