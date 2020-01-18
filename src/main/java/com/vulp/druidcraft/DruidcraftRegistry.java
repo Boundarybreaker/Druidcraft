@@ -221,6 +221,7 @@ public class DruidcraftRegistry {
         BlockRegistry.darkwood_door = register(new DoorBlock(FabricBlockSettings.of(Material.WOOD).strength(3.0f, 5.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "darkwood_door");
 
         BlockRegistry.elder_sapling = register(new SaplingBlock(new ElderTree(), FabricBlockSettings.of(Material.PLANT).strength(0.0f, 0.0f).noCollision().sounds(BlockSoundGroup.GRASS).build()), "elder_sapling");
+        BlockRegistry.potted_elder_sapling = register(new FlowerPotBlock(BlockRegistry.elder_sapling, FabricBlockSettings.of(Material.PART).strength(0.0f, 0.0f).sounds(BlockSoundGroup.STONE).build()), "potted_elder_sapling");
         BlockRegistry.elder_fruit = register(new ElderFruitBlock(FabricBlockSettings.of(Material.PLANT).strength(0.0f, 0.0f).noCollision().sounds(BlockSoundGroup.GRASS).ticksRandomly().build()), "elder_fruit");
         BlockRegistry.elder_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.of(Material.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "elder_log");
         BlockRegistry.elder_wood = register(new PillarBlock(FabricBlockSettings.copy(BlockRegistry.elder_log).build()), "elder_wood");

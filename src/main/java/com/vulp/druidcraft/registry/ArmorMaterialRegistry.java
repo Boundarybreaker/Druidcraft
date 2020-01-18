@@ -1,6 +1,7 @@
 package com.vulp.druidcraft.registry;
 
 import com.vulp.druidcraft.Druidcraft;
+import com.vulp.druidcraft.hooks.ModdedArmorMaterial;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ArmorMaterial;
 import net.minecraft.item.Item;
@@ -9,7 +10,7 @@ import net.minecraft.recipe.Ingredient;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 
-public enum ArmorMaterialRegistry implements ArmorMaterial
+public enum ArmorMaterialRegistry implements ArmorMaterial, ModdedArmorMaterial
 {
     bone("bone", 15, new int[] {1, 4, 5, 2}, 18, Items.BONE, "item.armor.equip.gold", 0.0f),
     chitin("chitin", 24, new int[] {3, 5, 7, 3}, 12, ItemRegistry.chitin, "item.armor.equip.leather", 1.0f),
@@ -61,6 +62,11 @@ public enum ArmorMaterialRegistry implements ArmorMaterial
     @Override
     public String getName() {
         return Druidcraft.MODID + ":" + this.name;
+    }
+
+    @Override
+    public Identifier getArmorName() {
+        return new Identifier(getName());
     }
 
     @Override

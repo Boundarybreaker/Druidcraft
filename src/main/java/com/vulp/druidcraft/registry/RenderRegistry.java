@@ -36,6 +36,19 @@ public class RenderRegistry
             return new BeetleInventoryScreen(syncid, player.inventory, label, beetleId);
         });
 
-        BlockRenderLayerMap.INSTANCE.putBlocks(RenderLayer.getCutout(), BlockRegistry.rope_lantern, BlockRegistry.rope, BlockRegistry.ceramic_lantern, BlockRegistry.blueberry_bush);
+        BlockRenderLayerMap.INSTANCE.putBlocks(RenderLayer.getCutout(),
+                BlockRegistry.darkwood_leaves,
+                BlockRegistry.elder_leaves,
+                BlockRegistry.darkwood_sapling,
+                BlockRegistry.elder_sapling,
+                BlockRegistry.potted_darkwood_sapling,
+                BlockRegistry.potted_elder_sapling,
+                BlockRegistry.rope_lantern,
+                BlockRegistry.rope,
+                BlockRegistry.ceramic_lantern,
+                BlockRegistry.fiery_torch,
+                BlockRegistry.wall_fiery_torch,
+                BlockRegistry.blueberry_bush,
+                BlockRegistry.hemp_crop);
     }
 }

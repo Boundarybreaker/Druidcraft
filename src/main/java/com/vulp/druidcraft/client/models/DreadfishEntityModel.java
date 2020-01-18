@@ -68,7 +68,9 @@ public class DreadfishEntityModel extends EntityModel<DreadfishEntity> {
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+        matrices.push();
         spine1.render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
+        matrices.pop();
     }
 
     @Override
@@ -80,5 +82,5 @@ public class DreadfishEntityModel extends EntityModel<DreadfishEntity> {
             j = 0.5F;
         }
         this.spine2.pitch = -f * 0.25F * MathHelper.sin(f1 * 0.6F * entity.age * j);
-        }
+    }
 }

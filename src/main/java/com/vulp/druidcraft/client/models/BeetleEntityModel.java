@@ -7,7 +7,6 @@ import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.AnimalModel;
 import net.minecraft.util.math.MathHelper;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 @Environment(EnvType.CLIENT)
@@ -45,7 +44,7 @@ public class BeetleEntityModel<T extends BeetleEntity> extends AnimalModel<T> {
 
         this.head = new ModelPart(this, 68, 42);
         this.head.setPivot(0.0F, -5.5F, -9.0F);
-//        this.body_1.addChild(this.head);
+        this.body_1.addChild(this.head);
         this.head.addCuboid(-5.0F, -5.0F, -8.0F, 10, 10, 8, 0.0F, false);
 
         this.antennae_L = new ModelPart(this, 0, 0);
@@ -141,12 +140,12 @@ public class BeetleEntityModel<T extends BeetleEntity> extends AnimalModel<T> {
 
     @Override
     protected Iterable<ModelPart> getHeadParts() {
-        return Collections.singleton(head);
+        return Collections.emptyList();
     }
 
     @Override
     protected Iterable<ModelPart> getBodyParts() {
-        return Arrays.asList(body_1, body_2);
+        return Collections.singleton(body_1);
     }
 
     private void rotationAngles(ModelPart rendererModel, float x, float y, float z) {
@@ -196,6 +195,11 @@ public class BeetleEntityModel<T extends BeetleEntity> extends AnimalModel<T> {
             this.saddle_main.visible = true;
             this.saddle_front.visible = true;
             this.saddle_back.visible = true;
+        } else {
+            this.harness.visible = false;
+            this.saddle_main.visible = false;
+            this.saddle_front.visible = false;
+            this.saddle_back.visible = false;
         }
 
         if (entity.hasChest()) {
@@ -203,6 +207,11 @@ public class BeetleEntityModel<T extends BeetleEntity> extends AnimalModel<T> {
             this.chest_L_back.visible = true;
             this.chest_R_front.visible = true;
             this.chest_R_back.visible = true;
+        } else {
+            this.chest_L_front.visible = false;
+            this.chest_L_back.visible = false;
+            this.chest_R_front.visible = false;
+            this.chest_R_back.visible = false;
         }
     }
 }
