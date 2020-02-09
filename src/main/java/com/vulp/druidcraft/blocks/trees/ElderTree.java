@@ -15,7 +15,7 @@ public class ElderTree extends SaplingGenerator {
     public ElderTree() {
     }
 
-    //TODO: does this look the same as the original? I've never actually *seen* the original...
+    //TODO: this doesn't look remotely the same as the original, and I'm not sure what to do about it due to the feature changes in 1.15+...
     @Override
     @Nullable
     protected ConfiguredFeature<BranchedTreeFeatureConfig, ?> createTreeFeature(Random random) {

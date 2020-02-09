@@ -14,16 +14,18 @@ import net.minecraft.state.StateManager;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 
 import java.util.Random;
 
 public class HempBlock extends CropBlock {
-    private static final IntProperty HEMP_AGE;
+    private static final IntProperty AGE;
 
     public HempBlock(Block.Settings properties) {
         super(properties);
@@ -31,7 +33,7 @@ public class HempBlock extends CropBlock {
 
     @Override
     public IntProperty getAgeProperty () {
-        return HEMP_AGE;
+        return AGE;
     }
 
     @Override
@@ -53,11 +55,8 @@ public class HempBlock extends CropBlock {
 
     @Override
     protected boolean canPlantOnTop(BlockState state, BlockView world, BlockPos pos) {
-        Block block = world.getBlockState(pos.down()).getBlock();
-        if (block == Blocks.FARMLAND || block == BlockRegistry.hemp_crop) {
-            return true;
-        }
-        else return false;
+        BlockState blockState = world.getBlockState(pos.down());
+        return (blockState.getBlock() == Blocks.FARMLAND || blockState.equals(BlockRegistry.hemp_crop.getDefaultState().with(AGE, 3)));
     }
 
     @Override
@@ -73,6 +72,9 @@ public class HempBlock extends CropBlock {
 
     @Override
     public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+        if (!canPlantOnTop(state, world, pos)) {
+            world.breakBlock(pos, true);
+        }
 
         super.scheduledTick(state, world, pos, random);
         canPlaceAt(state, world, pos);
@@ -93,7 +95,7 @@ public class HempBlock extends CropBlock {
                 }
             }
             else {
-                if ((topBlockValid == true) && (i == this.getMaxAge())) {
+                if ((topBlockValid) && (i == this.getMaxAge())) {
                     world.setBlockState(pos.up(), this.getDefaultState());
                 }
             }
@@ -122,11 +124,16 @@ public class HempBlock extends CropBlock {
     }
 
     @Override
+    public BlockState getStateForNeighborUpdate(BlockState state, Direction facing, BlockState neighborState, IWorld world, BlockPos pos, BlockPos neighborPos) {
+        return !canPlantOnTop(state, world, pos) ? Blocks.AIR.getDefaultState() : super.getStateForNeighborUpdate(state, facing, neighborState, world, pos, neighborPos);
+    }
+
+    @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(HEMP_AGE);
+        builder.add(AGE);
     }
 
     static {
-        HEMP_AGE = Properties.AGE_3;
+        AGE = Properties.AGE_3;
     }
 }

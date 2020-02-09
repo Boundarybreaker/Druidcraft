@@ -1,7 +1,7 @@
 package com.vulp.druidcraft.entities;
 
-import com.vulp.druidcraft.advancements.Advancements;
 import com.vulp.druidcraft.entities.AI.goals.SitGoalMonster;
+import com.vulp.druidcraft.registry.AdvancementRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.Entity;
@@ -226,7 +226,7 @@ public abstract class TameableMonsterEntity extends MobEntityWithAi {
         this.setTamed(true);
         this.setOwnerId(player.getUuid());
         if (player instanceof ServerPlayerEntity) {
-            Advancements.TAME_MONSTER.trigger((ServerPlayerEntity)player, this);
+            AdvancementRegistry.TAME_MONSTER.trigger((ServerPlayerEntity)player, this);
         }
 
     }

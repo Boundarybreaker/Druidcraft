@@ -1,24 +1,36 @@
 package com.vulp.druidcraft.world.features;
 
 import com.mojang.datafixers.Dynamic;
+import com.vulp.druidcraft.blocks.WoodBlock;
 import com.vulp.druidcraft.registry.BlockRegistry;
 import net.minecraft.block.BlockState;
-import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
+import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ModifiableTestableWorld;
+import net.minecraft.world.gen.feature.AbstractTreeFeature;
+import net.minecraft.world.gen.feature.TreeFeatureConfig;
 
+import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
 
-public class ElderTreeFeature /*extends AbstractTreeFeature<BranchedTreeFeatureConfig>*/ {
+public class ElderTreeFeature extends AbstractTreeFeature<TreeFeatureConfig> {
 
     private static final BlockState TRUNK = BlockRegistry.elder_log.getDefaultState();
-    private static final BlockState BASE = BlockRegistry.elder_wood.getDefaultState();
+    private static final BlockState BASE = BlockRegistry.elder_wood.getDefaultState().with(WoodBlock.dropSelf, false);
     private static final BlockState LEAF = BlockRegistry.elder_leaves.getDefaultState();
 
-    public ElderTreeFeature(Function<Dynamic<?>, ? extends BranchedTreeFeatureConfig> config) {
-//        super(config);
+    public ElderTreeFeature(Function<Dynamic<?>, ? extends TreeFeatureConfig> config) {
+        super(config);
 //        this.setSapling((IPlantable)BlockRegistry.elder_sapling);
     }
 
-//    @Override
+    @Override
+    protected boolean generate(ModifiableTestableWorld world, Random random, BlockPos pos, Set<BlockPos> logPositions, Set<BlockPos> leavesPositions, BlockBox blockBox, TreeFeatureConfig config) {
+        return false;
+    }
+
+    //    @Override
 //    protected boolean generate(ModifiableTestableWorld worldIn, Random rand, BlockPos position, Set<BlockPos> set, Set<BlockPos> changedBlocks, BlockBox boundsIn, BranchedTreeFeatureConfig config) {
 //
 //        int height = rand.nextInt(2) + 6;
