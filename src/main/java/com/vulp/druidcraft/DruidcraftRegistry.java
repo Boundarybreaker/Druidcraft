@@ -237,10 +237,8 @@ public class DruidcraftRegistry {
         BlockRegistry.darkwood_trapdoor = register(new TrapDoorBlock(FabricBlockSettings.of(Material.WOOD).strength(3.0f, 3.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "darkwood_trapdoor");
         BlockRegistry.darkwood_door = register(new DoorBlock(FabricBlockSettings.of(Material.WOOD).strength(3.0f, 5.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "darkwood_door");
 
-        BlockRegistry.potted_elder_sapling = register(new FlowerPotBlock(BlockRegistry.elder_sapling, FabricBlockSettings.of(Material.PART).strength(0.0f, 0.0f).sounds(BlockSoundGroup.STONE).build()), "potted_elder_sapling");
-        BlockRegistry.elder_fruit = register(new ElderFruitBlock(FabricBlockSettings.of(Material.PLANT).strength(0.0f, 0.0f).noCollision().sounds(BlockSoundGroup.GRASS).ticksRandomly().build()), "elder_fruit");
         BlockRegistry.elder_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.of(Material.WOOD).strength(2.0f, 2.0f).breakByTool(FabricToolTags.AXES).sounds(BlockSoundGroup.WOOD).build()), "elder_log");
-        BlockRegistry.stripped_elder_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.copy(BlockRegistry.elder_log).build()), "elder_wood");
+        BlockRegistry.stripped_elder_log = register(new LogBlock(MaterialColor.WOOD, FabricBlockSettings.copy(BlockRegistry.elder_log).build()), "stripped_elder_log");
         BlockRegistry.elder_leaves = register(new ElderLeavesBlock(FabricBlockSettings.of(Material.LEAVES).nonOpaque().strength(0.2f, 0.2f).ticksRandomly().sounds(BlockSoundGroup.GRASS).build()), "elder_leaves");
         BlockRegistry.elder_sapling = register(new SaplingBlock(new ElderTree(), FabricBlockSettings.of(Material.PLANT).strength(0.0f, 0.0f).noCollision().sounds(BlockSoundGroup.GRASS).build()), "elder_sapling");
         BlockRegistry.potted_elder_sapling = register(new FlowerPotBlock(BlockRegistry.elder_sapling, FabricBlockSettings.of(Material.PART).strength(0.0f, 0.0f).sounds(BlockSoundGroup.STONE).build()), "potted_elder_sapling");
