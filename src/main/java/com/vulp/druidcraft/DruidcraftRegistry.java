@@ -394,7 +394,7 @@ public class DruidcraftRegistry {
     // FEATURE REGISTRATION
     public static void onFeatureRegistry()
     {
-        FeatureRegistry.elder_tree = register(new OakTreeFeature(BranchedTreeFeatureConfig::deserialize2), "elder_tree");
+        FeatureRegistry.elder_tree = register(new OakTreeFeature(BranchedTreeFeatureConfig::deserialize), "elder_tree");
         FeatureRegistry.blueberry_bush = register(new BerryBushFeature(RandomPatchFeatureConfig::deserialize, BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)), "blueberry_bush");
         FeatureRegistry.lavender = register(new LavenderPatchFeature(RandomPatchFeatureConfig::deserialize, BlockRegistry.lavender.getDefaultState()), "lavender");
 

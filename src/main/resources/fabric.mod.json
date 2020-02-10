@@ -10,9 +10,9 @@
   ],
   "icon": "assets/druidcraft/icon.png",
   "description": "A druid-focused splice-of-life mod that's currently in very early alpha, if you'd even consider it at that point yet.\n\nRegardless, I hope you enjoy the features as they're rolled out! :)",
-  "license": "MIT",
+  "license": "LGPL 2.1",
   "contact": {
-    "sources": "https://github.com/MysticMods/Druidcraft",
+    "sources": "https://github.com/Boundarybreaker/Druidcraft",
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/druidcraft"
   },
   "environment": "*",
@@ -30,6 +30,7 @@
   "depends": {
     "fabricloader": ">=0.4.0",
     "fabric": "*",
-    "vmulti": "*"
+    "vmulti": "*",
+    "jankson": "*"
   }
 }

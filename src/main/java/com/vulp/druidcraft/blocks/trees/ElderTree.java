@@ -18,7 +18,7 @@ public class ElderTree extends SaplingGenerator {
     //TODO: this doesn't look remotely the same as the original, and I'm not sure what to do about it due to the feature changes in 1.15+...
     @Override
     @Nullable
-    protected ConfiguredFeature<BranchedTreeFeatureConfig, ?> createTreeFeature(Random random) {
+    protected ConfiguredFeature<BranchedTreeFeatureConfig, ?> createTreeFeature(Random random, boolean bl) {
         return Feature.NORMAL_TREE.configure(new BranchedTreeFeatureConfig.Builder(
                 new SimpleStateProvider(BlockRegistry.elder_log.getDefaultState()),
                 new SimpleStateProvider(BlockRegistry.elder_leaves.getDefaultState()),

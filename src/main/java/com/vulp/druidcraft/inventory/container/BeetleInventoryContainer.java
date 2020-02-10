@@ -64,12 +64,12 @@ public class BeetleInventoryContainer extends Container {
     @Override
     public ItemStack transferSlot(PlayerEntity playerIn, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slotList.get(index);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasStack()) {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
             if (index < this.beetleInventory.getInvSize()) {
-                if (!this.insertItem(itemstack1, this.beetleInventory.getInvSize(), this.slotList.size(), true)) {
+                if (!this.insertItem(itemstack1, this.beetleInventory.getInvSize(), this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
             } else if (this.getSlot(1).canInsert(itemstack1) && !this.getSlot(1).hasStack()) {

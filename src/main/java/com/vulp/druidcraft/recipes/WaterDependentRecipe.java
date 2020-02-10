@@ -137,7 +137,7 @@ public class WaterDependentRecipe extends ShapedRecipe {
         }
 
         PlayerEntity player = findPlayer(craftingInventory);
-        if (player != null && player.isInsideWaterOrRain()) {
+        if (player != null && player.isTouchingWaterOrRain()) {
             return true;
         }
         return false;

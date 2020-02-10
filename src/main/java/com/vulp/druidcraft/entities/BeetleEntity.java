@@ -11,7 +11,7 @@ import net.fabricmc.fabric.api.container.ContainerProviderRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.container.Container;
-import net.minecraft.container.NameableContainerProvider;
+import net.minecraft.container.NameableContainerFactory;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -46,7 +46,7 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class BeetleEntity extends TameableMonsterEntity implements InventoryListener, NameableContainerProvider {
+public class BeetleEntity extends TameableMonsterEntity implements InventoryListener, NameableContainerFactory {
     private static final TrackedData<Boolean> SADDLE = DataTracker.registerData(BeetleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> CHEST = DataTracker.registerData(BeetleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private BasicInventory beetleChest;
@@ -329,7 +329,7 @@ public class BeetleEntity extends TameableMonsterEntity implements InventoryList
        if (passenger instanceof MobEntity) {
            MobEntity mobentity = (MobEntity)passenger;
            this.bodyYaw = mobentity.bodyYaw;
-           passenger.setPosition(this.getPos().x, this.getPos().y + this.getMountedHeightOffset() + passenger.getHeightOffset(), this.getPos().z);
+           passenger.setPos(this.getPos().x, this.getPos().y + this.getMountedHeightOffset() + passenger.getHeightOffset(), this.getPos().z);
        }
    }
 

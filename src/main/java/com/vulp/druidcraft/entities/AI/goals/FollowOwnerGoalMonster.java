@@ -100,7 +100,7 @@ public class FollowOwnerGoalMonster extends Goal {
                         for (int l = 0; l <= 4; ++l) {
                             for (int i1 = 0; i1 <= 4; ++i1) {
                                 if ((l < 1 || i1 < 1 || l > 3 || i1 > 3) && this.canTeleportToBlock(new BlockPos(i + l, k - 1, j + i1))) {
-                                    this.tameable.setPositionAndAngles((float) (i + l) + 0.5F, k + 1, (float) (j + i1) + 0.5F, this.tameable.yaw, this.tameable.pitch);
+                                    this.tameable.refreshPositionAndAngles((float) (i + l) + 0.5F, k + 1, (float) (j + i1) + 0.5F, this.tameable.yaw, this.tameable.pitch);
                                     this.navigator.stop();
 
                                 }

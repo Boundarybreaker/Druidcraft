@@ -12,8 +12,8 @@ import net.minecraft.world.gen.stateprovider.SimpleStateProvider;
 
 public class BiomeFeatures {
 
-    public static final Feature<BranchedTreeFeatureConfig> darkwood_tree = new OakTreeFeature(BranchedTreeFeatureConfig::deserialize2);
-    public static final Feature<MegaTreeFeatureConfig> mega_darkwood_tree = new MegaPineTreeFeature(MegaTreeFeatureConfig::method_23408);
+    public static final Feature<BranchedTreeFeatureConfig> darkwood_tree = new OakTreeFeature(BranchedTreeFeatureConfig::deserialize);
+    public static final Feature<MegaTreeFeatureConfig> mega_darkwood_tree = new MegaPineTreeFeature(MegaTreeFeatureConfig::deserialize);
     public static final Feature<TreeFeatureConfig> darkwood_shrubs = new JungleGroundBushFeature(TreeFeatureConfig::deserialize);
 
     public static final BranchedTreeFeatureConfig darkwood_tree_config = new BranchedTreeFeatureConfig.Builder(

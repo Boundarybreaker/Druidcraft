@@ -16,6 +16,6 @@ public class TileEntityRegistry {
     public static <T extends BlockEntity> BlockEntityType<T> register(String id, BlockEntityType.Builder<T> builder)
     {
         BlockEntityType<T> type = builder.build(null);
-        return Registry.register(Registry.BLOCK_ENTITY, new Identifier(Druidcraft.MODID, id), type);
+        return Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(Druidcraft.MODID, id), type);
     }
 }

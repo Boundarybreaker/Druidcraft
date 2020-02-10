@@ -32,13 +32,9 @@ dependencies {
 
     modImplementation "io.github.cottonmc:Jankson-Fabric:${project.jankson_version}"
     modImplementation "io.github.cottonmc:VMulti:${project.vmulti_version}"
-//    modImplementation "com.github.NerdHubMC.Cardinal-Components-API:cardinal-components-base:${project.cardinal_version}"
-//    modImplementation "com.github.NerdHubMC.Cardinal-Components-API:cardinal-components-entity:${project.cardinal_version}"
 
     include "io.github.cottonmc:Jankson-Fabric:${project.jankson_version}"
-    modImplementation "io.github.cottonmc:VMulti:${project.vmulti_version}"
-//    include "com.github.NerdHubMC.Cardinal-Components-API:cardinal-components-base:${project.cardinal_version}"
-//    include "com.github.NerdHubMC.Cardinal-Components-API:cardinal-components-entity:${project.cardinal_version}"
+    include "io.github.cottonmc:VMulti:${project.vmulti_version}"
 }
 
 processResources {

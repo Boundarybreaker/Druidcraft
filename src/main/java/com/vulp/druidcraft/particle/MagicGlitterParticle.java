@@ -22,7 +22,7 @@ public class MagicGlitterParticle extends SpriteBillboardParticle {
         this.colorGreen = (float) velocityY;
         this.colorBlue = (float) velocityZ;
         this.maxAge = (int)(8.0D / (Math.random() * 0.8D + 0.2D)) + 4;
-        this.setSprite(sprite);
+        this.setSprite(spriteSet);
     }
 
     @Override

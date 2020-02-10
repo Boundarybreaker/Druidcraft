@@ -5,8 +5,10 @@ import com.vulp.druidcraft.registry.BlockRegistry;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.sapling.LargeTreeSaplingGenerator;
 import net.minecraft.world.gen.decorator.AlterGroundTreeDecorator;
-import net.minecraft.world.gen.feature.*;
-import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
+import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.MegaTreeFeatureConfig;
 import net.minecraft.world.gen.foliage.SpruceFoliagePlacer;
 import net.minecraft.world.gen.stateprovider.SimpleStateProvider;
 
@@ -16,7 +18,7 @@ public class DarkwoodTree extends LargeTreeSaplingGenerator {
 
     //TODO: do these look the same as the original?
     @Override
-    protected ConfiguredFeature<BranchedTreeFeatureConfig, ?> createTreeFeature(Random random) {
+    protected ConfiguredFeature<BranchedTreeFeatureConfig, ?> createTreeFeature(Random random, boolean bl) {
         return Feature.NORMAL_TREE
                 .configure(new BranchedTreeFeatureConfig.Builder(
                         new SimpleStateProvider(BlockRegistry.darkwood_log.getDefaultState()),
