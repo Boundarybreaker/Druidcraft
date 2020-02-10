@@ -17,7 +17,7 @@ import net.minecraft.util.Identifier;
 @Environment(EnvType.CLIENT)
 public class RenderRegistry
 {
-    public static void registryRenders()
+    public static void registerRenders()
     {
         // ENTITIES
         EntityRendererRegistry.INSTANCE.register(EntityRegistry.beetle_entity, (entityRenderDispatcher, context) -> new BeetleEntityRender(entityRenderDispatcher));
@@ -44,6 +44,13 @@ public class RenderRegistry
                 BlockRegistry.fiery_torch,
                 BlockRegistry.wall_fiery_torch,
                 BlockRegistry.blueberry_bush,
-                BlockRegistry.hemp_crop);
+                BlockRegistry.hemp_crop,
+                BlockRegistry.growth_lamp,
+                BlockRegistry.turquoise_lunar_moth_jar,
+                BlockRegistry.white_lunar_moth_jar,
+                BlockRegistry.lime_lunar_moth_jar,
+                BlockRegistry.yellow_lunar_moth_jar,
+                BlockRegistry.orange_lunar_moth_jar,
+                BlockRegistry.pink_lunar_moth_jar);
     }
 }

@@ -7,7 +7,7 @@ import net.fabricmc.api.ClientModInitializer;
 public class DruidcraftClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
-		RenderRegistry.registryRenders();
+		RenderRegistry.registerRenders();
 		ParticleRegistry.registerFactories();
 		Druidcraft.LOGGER.info("Client registry method registered.");
 	}

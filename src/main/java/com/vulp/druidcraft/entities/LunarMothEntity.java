@@ -1,12 +1,12 @@
 package com.vulp.druidcraft.entities;
 
 import com.vulp.druidcraft.items.LunarMothJarItem;
+import com.vulp.druidcraft.registry.ItemRegistry;
+import com.vulp.druidcraft.registry.ParticleRegistry;
 import com.vulp.druidcraft.registry.SoundEventRegistry;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.*;
 import net.minecraft.entity.ai.TargetPredicate;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
@@ -26,9 +26,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
+import java.util.Random;
 
 public class LunarMothEntity extends AnimalEntity {
     private static final TrackedData<Boolean> RESTING = DataTracker.registerData(LunarMothEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -44,7 +46,7 @@ public class LunarMothEntity extends AnimalEntity {
     @Override
     protected void initAttributes() {
         super.initAttributes();
-        this.timeUntilDropGlowstone = this.random.nextInt(6000) + 8000;
+        this.timeUntilDropGlowstone = this.random.nextInt(10000) + 10000;
         this.getAttributeInstance(EntityAttributes.MAX_HEALTH).setBaseValue(6.0D);
     }
 
@@ -207,6 +209,10 @@ public class LunarMothEntity extends AnimalEntity {
         compound.putInt("GlowstoneDropTime", this.timeUntilDropGlowstone);
     }
 
+    public static boolean canSpawn(EntityType<LunarMothEntity> entity, IWorld world, SpawnType reason, BlockPos pos, Random random) {
+        return world.getBlockState(pos.down()).getBlock() != Blocks.AIR;
+    }
+
     @Nullable
     @Override
     public PassiveEntity createChild(PassiveEntity ageable) {
@@ -225,10 +231,51 @@ public class LunarMothEntity extends AnimalEntity {
     public void tickMovement() {
         super.tickMovement();
         if (!this.world.isClient && this.isAlive() && --this.timeUntilDropGlowstone <= 0) {
-            this.dropItem(Items.GLOWSTONE_DUST);
-            this.timeUntilDropGlowstone = this.random.nextInt(6000) + 8000;
+            if (random.nextInt(7) == 0) {
+
+                ItemStack eggItem;
+                int eggColor;
+
+
+                if (getColor() == LunarMothColors.LIME) {
+                    eggItem = new ItemStack(ItemRegistry.lunar_moth_egg_lime);
+                    eggColor = 2;
+                }
+                else if (getColor() == LunarMothColors.ORANGE) {
+                    eggItem = new ItemStack(ItemRegistry.lunar_moth_egg_orange);
+                    eggColor = 4;
+                }
+                else if (getColor() == LunarMothColors.YELLOW) {
+                    eggItem = new ItemStack(ItemRegistry.lunar_moth_egg_yellow);
+                    eggColor = 3;
+                }
+                else if (getColor() == LunarMothColors.PINK) {
+                    eggItem = new ItemStack(ItemRegistry.lunar_moth_egg_pink);
+                    eggColor = 5;
+                }
+                else if (getColor() == LunarMothColors.WHITE) {
+                    eggItem = new ItemStack(ItemRegistry.lunar_moth_egg_white);
+                    eggColor = 1;
+                }
+                else {
+                    eggItem = new ItemStack(ItemRegistry.lunar_moth_egg_turquoise);
+                    eggColor = 0;
+                }
+
+                CompoundTag tag = eggItem.getOrCreateTag();
+                CompoundTag entityData = new CompoundTag();
+                entityData.putInt("Color", eggColor);
+                tag.put("EntityData", entityData);
+
+                this.dropStack(eggItem);
+
+            }
+            else {
+                this.dropItem(Items.GLOWSTONE_DUST);
+            }
+            this.timeUntilDropGlowstone = this.random.nextInt(10000) + 10000;
         }
-        /*if (this.world.isClient) {
+        if (this.world.isClient) {
             int red = 1;
             int green = 1;
             int blue = 1;
@@ -263,11 +310,22 @@ public class LunarMothEntity extends AnimalEntity {
                 blue = 140;
             }
 
-            world.addParticle(ParticleRegistry.magic_mist, false, this.getPos().x + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().y + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().z + (((rand.nextDouble() - 0.5) + 0.2) / 3), red / 255.f, green / 255.f, blue / 255.f);
-            if (rand.nextBoolean()) {
-                world.addParticle(ParticleRegistry.magic_glitter, false, this.getPos().x + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().y + (((rand.nextDouble() - 0.5) + 0.2) / 3) + 0.2, this.getPos().z + (((rand.nextDouble() - 0.5) + 0.2) / 3), red + 40 / 255.f, green + 40 / 255.f, blue + 40 / 255.f);
+            float colorMod;
+
+            if (random.nextInt(3) == 3) {
+                colorMod = 1.1f;
             }
-        }*/
+            else if (random.nextInt(3) == 3) {
+                colorMod = 0.9f;
+            }
+            else {
+                colorMod = 1.0f;
+            }
+
+            if (random.nextBoolean()) {
+                world.addParticle(ParticleRegistry.magic_glitter, false, this.getPos().getX() + (((random.nextDouble() - 0.5)) / 3), this.getPos().getY() + ((random.nextDouble() - 0.5) / 3) + 0.2, this.getPos().getZ() + (((random.nextDouble() - 0.5)) / 3), (red / 255.f) * colorMod, (green / 255.f) * colorMod, (blue / 255.f) * colorMod);
+            }
+        }
     }
 
     @Override

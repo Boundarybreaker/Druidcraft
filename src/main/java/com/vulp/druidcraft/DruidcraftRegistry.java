@@ -8,12 +8,15 @@ import com.vulp.druidcraft.blocks.StairsBlock;
 import com.vulp.druidcraft.blocks.WoodButtonBlock;
 import com.vulp.druidcraft.blocks.*;
 import com.vulp.druidcraft.blocks.tileentities.CrateTileEntity;
+import com.vulp.druidcraft.blocks.tileentities.GrowthLampTileEntity;
 import com.vulp.druidcraft.blocks.trees.DarkwoodTree;
 import com.vulp.druidcraft.blocks.trees.ElderTree;
 import com.vulp.druidcraft.entities.LunarMothColors;
 import com.vulp.druidcraft.items.*;
 import com.vulp.druidcraft.registry.*;
 import com.vulp.druidcraft.world.biomes.DarkwoodForest;
+import com.vulp.druidcraft.world.features.BerryBushFeature;
+import com.vulp.druidcraft.world.features.LavenderPatchFeature;
 import net.fabricmc.fabric.api.biomes.v1.OverworldBiomes;
 import net.fabricmc.fabric.api.biomes.v1.OverworldClimate;
 import net.fabricmc.fabric.api.block.FabricBlockSettings;
@@ -95,12 +98,19 @@ public class DruidcraftRegistry {
         ItemRegistry.gold_sickle = register(new SickleItem(new ItemProperties().attackDamage(0).attackSpeed(-1.5f).tier(ToolMaterials.GOLD).radius(1).setGroup(ItemGroup.TOOLS)), "gold_sickle");
         ItemRegistry.diamond_sickle = register(new SickleItem(new ItemProperties().attackDamage(0).attackSpeed(-1.5f).tier(ToolMaterials.DIAMOND).radius(4).setGroup(ItemGroup.TOOLS)), "diamond_sickle");
 
-        ItemRegistry.lunar_moth_jar_turquoise = register(new LunarMothJarItem(BlockRegistry.turquoise_lunar_moth_jar, LunarMothColors.TURQUOISE, new Item.Settings().group(DRUIDCRAFT)), "lunar_moth_jar");
+        ItemRegistry.lunar_moth_jar_turquoise = register(new LunarMothJarItem(BlockRegistry.turquoise_lunar_moth_jar, LunarMothColors.TURQUOISE, new Item.Settings().group(DRUIDCRAFT)), "turquoise_lunar_moth_jar");
         ItemRegistry.lunar_moth_jar_white = register(new LunarMothJarItem(BlockRegistry.white_lunar_moth_jar, LunarMothColors.WHITE, new LunarMothJarItem.Settings().group(DRUIDCRAFT)), "white_lunar_moth_jar");
         ItemRegistry.lunar_moth_jar_lime = register(new LunarMothJarItem(BlockRegistry.lime_lunar_moth_jar, LunarMothColors.LIME, new LunarMothJarItem.Settings().group(DRUIDCRAFT)), "lime_lunar_moth_jar");
         ItemRegistry.lunar_moth_jar_yellow = register(new LunarMothJarItem(BlockRegistry.yellow_lunar_moth_jar, LunarMothColors.YELLOW, new LunarMothJarItem.Settings().group(DRUIDCRAFT)), "yellow_lunar_moth_jar");
         ItemRegistry.lunar_moth_jar_orange = register(new LunarMothJarItem(BlockRegistry.orange_lunar_moth_jar, LunarMothColors.ORANGE, new LunarMothJarItem.Settings().group(DRUIDCRAFT)), "orange_lunar_moth_jar");
         ItemRegistry.lunar_moth_jar_pink = register(new LunarMothJarItem(BlockRegistry.pink_lunar_moth_jar, LunarMothColors.PINK, new LunarMothJarItem.Settings().group(DRUIDCRAFT)), "pink_lunar_moth_jar");
+
+        ItemRegistry.lunar_moth_egg_turquoise = register(new LunarMothEggItem(LunarMothColors.TURQUOISE, new Item.Settings().group(DRUIDCRAFT)), "turquoise_lunar_moth_egg");
+        ItemRegistry.lunar_moth_egg_white = register(new LunarMothEggItem(LunarMothColors.WHITE, new Item.Settings().group(DRUIDCRAFT)), "white_lunar_moth_egg");
+        ItemRegistry.lunar_moth_egg_lime = register(new LunarMothEggItem(LunarMothColors.LIME, new Item.Settings().group(DRUIDCRAFT)), "lime_lunar_moth_egg");
+        ItemRegistry.lunar_moth_egg_yellow = register(new LunarMothEggItem(LunarMothColors.YELLOW, new Item.Settings().group(DRUIDCRAFT)), "yellow_lunar_moth_egg");
+        ItemRegistry.lunar_moth_egg_orange = register(new LunarMothEggItem(LunarMothColors.ORANGE, new Item.Settings().group(DRUIDCRAFT)), "orange_lunar_moth_egg");
+        ItemRegistry.lunar_moth_egg_pink = register(new LunarMothEggItem(LunarMothColors.PINK, new Item.Settings().group(DRUIDCRAFT)), "pink_lunar_moth_egg");
 
         ItemRegistry.blueberries = register(new AliasedBlockItem(BlockRegistry.blueberry_bush, new Item.Settings().group(DRUIDCRAFT).food(FoodRegistry.blueberries)), "blueberries");
         ItemRegistry.elderberries = register(new Item(new Item.Settings().group(DRUIDCRAFT).food(FoodRegistry.elderberries)), "elderberries");
@@ -184,6 +194,7 @@ public class DruidcraftRegistry {
         ItemRegistry.crate = register(new BlockItem(BlockRegistry.crate_temp, new Item.Settings().group(DRUIDCRAFT)), Registry.BLOCK.getId(BlockRegistry.crate_temp));
         ItemRegistry.ceramic_lantern = register(new BlockItem(BlockRegistry.ceramic_lantern, new Item.Settings().group(DRUIDCRAFT)), Registry.BLOCK.getId(BlockRegistry.ceramic_lantern));
         ItemRegistry.lavender = register(new BlockItem(BlockRegistry.lavender, new Item.Settings().group(DRUIDCRAFT)), Registry.BLOCK.getId(BlockRegistry.lavender));
+        ItemRegistry.growth_lamp = register(new BlockItem(BlockRegistry.growth_lamp, new Item.Settings().group(DRUIDCRAFT)), Registry.BLOCK.getId(BlockRegistry.growth_lamp));
 
         ItemRegistry.black_soulfire = register(new BlockItem(BlockRegistry.black_soulfire, new Item.Settings().group(DRUIDCRAFT)), Registry.BLOCK.getId(BlockRegistry.black_soulfire));
         ItemRegistry.red_soulfire = register(new BlockItem(BlockRegistry.red_soulfire, new Item.Settings().group(DRUIDCRAFT)), Registry.BLOCK.getId(BlockRegistry.red_soulfire));
@@ -299,6 +310,7 @@ public class DruidcraftRegistry {
         BlockRegistry.yellow_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly().build(), 4), "yellow_lunar_moth_lantern");
         BlockRegistry.orange_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly().build(), 5), "orange_lunar_moth_lantern");
         BlockRegistry.pink_lunar_moth_jar = register(new LunarMothJarBlock(FabricBlockSettings.of(Material.GLASS).sounds(BlockSoundGroup.GLASS).strength(1.0f, 1.0f).lightLevel(10).ticksRandomly().build(), 6), "pink_lunar_moth_lantern");
+        BlockRegistry.growth_lamp = register(new GrowthLampBlock(FabricBlockSettings.of(Material.STONE).sounds(BlockSoundGroup.STONE).ticksRandomly().breakByTool(FabricToolTags.PICKAXES).strength(1.35f, 1.35f).lightLevel(14).build()), "growth_lamp");
 
         BlockRegistry.black_soulfire = register(new SoulfireBlock(DyeColor.BLACK, FabricBlockSettings.of(Material.FIRE).sounds(BlockSoundGroup.SNOW).strength(0.0f, 0.0f).noCollision().lightLevel(13).build()), "black_soulfire");
         BlockRegistry.red_soulfire = register(new SoulfireBlock(DyeColor.RED, FabricBlockSettings.of(Material.FIRE).sounds(BlockSoundGroup.SNOW).strength(0.0f, 0.0f).noCollision().lightLevel(13).build()), "red_soulfire");
@@ -364,7 +376,6 @@ public class DruidcraftRegistry {
     // GUI REGISTRATION
     public static void onContainerRegistry()
     {
-        //TODO: container reg
         register(GUIRegistry.beetle_inv, "beetle_inv");
 
         LOGGER.info("GUI registered.");
@@ -375,6 +386,8 @@ public class DruidcraftRegistry {
     {
         TileEntityRegistry.crate = TileEntityRegistry.register("crate", BlockEntityType.Builder.create(CrateTileEntity::new, BlockRegistry.crate_temp));
 
+        TileEntityRegistry.growth_lamp = TileEntityRegistry.register("growth_lamp", BlockEntityType.Builder.create(GrowthLampTileEntity::new, BlockRegistry.growth_lamp));
+
         LOGGER.info("Tile Entities registered.");
     }
 
@@ -382,7 +395,8 @@ public class DruidcraftRegistry {
     public static void onFeatureRegistry()
     {
         FeatureRegistry.elder_tree = register(new OakTreeFeature(BranchedTreeFeatureConfig::deserialize2), "elder_tree");
-        FeatureRegistry.blueberry_bush = register(new RandomPatchFeature(RandomPatchFeatureConfig::deserialize), "blueberry_bush");
+        FeatureRegistry.blueberry_bush = register(new BerryBushFeature(RandomPatchFeatureConfig::deserialize, BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)), "blueberry_bush");
+        FeatureRegistry.lavender = register(new LavenderPatchFeature(RandomPatchFeatureConfig::deserialize, BlockRegistry.lavender.getDefaultState()), "lavender");
 
         FeatureRegistry.spawnFeatures();
         LOGGER.info("Features registered.");

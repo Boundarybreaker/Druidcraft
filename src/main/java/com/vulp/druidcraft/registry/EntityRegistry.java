@@ -47,6 +47,7 @@ public class EntityRegistry
     {
         registerEntityWorldSpawn(EntitySpawnConfig.dreadfish_spawn, dreadfish_entity, EntityCategory.MONSTER, EntitySpawnConfig.dreadfish_weight, EntitySpawnConfig.dreadfish_min_group, EntitySpawnConfig.dreadfish_max_group, EntitySpawnConfig.dreadfish_biome_types, EntitySpawnConfig.dreadfish_biome_exclusions);
         registerEntityWorldSpawn(EntitySpawnConfig.beetle_spawn, beetle_entity, EntityCategory.MONSTER, EntitySpawnConfig.beetle_weight, EntitySpawnConfig.beetle_min_group, EntitySpawnConfig.beetle_max_group, EntitySpawnConfig.beetle_biome_types, EntitySpawnConfig.beetle_biome_exclusions);
+        registerEntityWorldSpawn(EntitySpawnConfig.lunar_moth_spawn, lunar_moth_entity, EntityCategory.CREATURE, EntitySpawnConfig.lunar_moth_weight, EntitySpawnConfig.lunar_moth_min_group, EntitySpawnConfig.lunar_moth_max_group, EntitySpawnConfig.lunar_moth_biome_types, EntitySpawnConfig.lunar_moth_biome_exclusions);
 
         MixinSpawnRestriction.invokeRegister(beetle_entity, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, BeetleEntity::placement);
         MixinSpawnRestriction.invokeRegister(dreadfish_entity, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, DreadfishEntity::placement);

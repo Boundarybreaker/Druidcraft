@@ -27,6 +27,15 @@ public class EntitySpawnConfig {
     public static List<String> beetle_biome_types = new ArrayList<>();
     //TODO: change for Fabric? Original vals: <empty>
     public static List<String> beetle_biome_exclusions = new ArrayList<>();
+
+    public static boolean lunar_moth_spawn = true;
+    public static int lunar_moth_weight = 10;
+    public static int lunar_moth_min_group = 1;
+    public static int lunar_moth_max_group = 2;
+    //TODO: change for Fabric? Original vals: CONIFEROUS, FOREST, JUNGLE, DENSE
+    public static List<String> lunar_moth_biome_types = new ArrayList<>();
+    //TODO: change for Fabric? Original vals: <empty>
+    public static List<String> lunar_moth_biome_exclusions = new ArrayList<>();
     
     public static void load(JsonObject json) {
         dreadfish_spawn = json.getBoolean("dreadfish_spawn", dreadfish_spawn);
@@ -42,6 +51,13 @@ public class EntitySpawnConfig {
         beetle_max_group = json.getInt("beetle_max_group", beetle_max_group);
         beetle_biome_types = getListOrDefault(json.get("beetle_biome_types"), beetle_biome_types);
         beetle_biome_exclusions = getListOrDefault(json.get("beetle_biome_exclusions"), beetle_biome_exclusions);
+
+        lunar_moth_spawn = json.getBoolean("lunar_moth_spawn", lunar_moth_spawn);
+        lunar_moth_weight = json.getInt("lunar_moth_weight", lunar_moth_weight);
+        lunar_moth_min_group = json.getInt("lunar_moth_min_group", lunar_moth_min_group);
+        lunar_moth_max_group = json.getInt("lunar_moth_max_group", lunar_moth_max_group);
+        lunar_moth_biome_types = getListOrDefault(json.get("lunar_moth_biome_types"), lunar_moth_biome_types);
+        lunar_moth_biome_exclusions = getListOrDefault(json.get("lunar_moth_biome_exclusions"), lunar_moth_biome_exclusions);
     }
 
     public static List<String> getListOrDefault(JsonElement json, List<String> def) {
@@ -73,6 +89,13 @@ public class EntitySpawnConfig {
         json.putDefault("beetle_max_group", beetle_max_group,"Maximum size of the beetle group when spawned.");
         json.putDefault("beetle_biome_types", putList(beetle_biome_types), "List of biome types from the biome dictionary that the beetle can spawn in.");
         json.putDefault("beetle_biome_exclusions", putList(beetle_biome_exclusions), "List of biome types from the biome dictionary that the beetle cannot spawn in.");
+
+        json.putDefault("lunar_moth_spawn", lunar_moth_spawn, "Allow lunar_moth to spawn?");
+        json.putDefault("lunar_moth_weight", lunar_moth_weight, "Determines the rarity of the lunar_moth. Value from 0 to 100.");
+        json.putDefault("lunar_moth_min_group", lunar_moth_min_group, "Minimum size of the lunar_moth group when spawned.");
+        json.putDefault("lunar_moth_max_group", lunar_moth_max_group,"Maximum size of the lunar_moth group when spawned.");
+        json.putDefault("lunar_moth_biome_types", putList(lunar_moth_biome_types), "List of biome types from the biome dictionary that the lunar_moth can spawn in.");
+        json.putDefault("lunar_moth_biome_exclusions", putList(lunar_moth_biome_exclusions), "List of biome types from the biome dictionary that the lunar_moth cannot spawn in.");
     }
 
     public static JsonArray putList(List<String> list) {

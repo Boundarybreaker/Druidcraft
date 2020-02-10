@@ -4,7 +4,6 @@ import com.vulp.druidcraft.api.CropLifeStageType;
 import com.vulp.druidcraft.registry.ItemRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.Fertilizable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityContext;
@@ -175,9 +174,9 @@ public class ElderFruitBlock extends CropBlock implements Fertilizable {
         super.randomTick(state, worldIn, pos, random);
         if (!worldIn.isClient && (worldIn.random.nextInt(8) == 0)) {
             if (CropLifeStageType.checkCropLife(worldIn) == CropLifeStageType.NONE) {
-                    worldIn.setBlockState(pos, Blocks.AIR.getDefaultState());
-                    if (worldIn.random.nextInt(4) == 0) {
-                        dropStack(worldIn, pos, new ItemStack(ItemRegistry.elderberries, 1));
+                worldIn.breakBlock(pos, false);
+                if (worldIn.random.nextInt(4) == 0) {
+                    dropStack(worldIn, pos, new ItemStack(ItemRegistry.elderberries, 1));
                 }
             }
         }

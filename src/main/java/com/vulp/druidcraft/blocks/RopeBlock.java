@@ -345,7 +345,7 @@ public class RopeBlock extends ConnectedPlantBlock implements Waterloggable, IKn
 
         RopeConnectionType downType = RopeConnectionType.NONE;
         BlockState downState = world.getBlockState(pos.offset(Direction.DOWN));
-        if (downState.isSideSolidFullSquare(world, pos.offset(Direction.DOWN), Direction.DOWN.getOpposite()) || downState.getBlock() == this || downState.getBlock().matches(BlockTags.FENCES) || downState.getBlock() instanceof RopeLanternBlock || (downState.getBlock() instanceof RopeableLanternBlock && downState.get(RopeableLanternBlock.HANGING) && downState.get(RopeableLanternBlock.ROPED))) {
+        if (downState.isSideSolidFullSquare(world, pos.offset(Direction.DOWN), Direction.DOWN.getOpposite()) || downState.getBlock() == this || downState.getBlock().matches(BlockTags.FENCES) || downState.getBlock() instanceof RopeLanternBlock || ((downState.getBlock() instanceof GrowthLampBlock || (downState.getBlock() instanceof RopeableLanternBlock) && downState.get(RopeableLanternBlock.HANGING) && downState.get(RopeableLanternBlock.ROPED)))) {
             downType = RopeConnectionType.REGULAR;
         } else if (downState.getBlock() instanceof SmallBeamBlock) {
             downType = beamChecker(downState, Direction.DOWN);

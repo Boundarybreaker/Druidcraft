@@ -8,9 +8,7 @@ import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.decorator.CountDecoratorConfig;
 import net.minecraft.world.gen.decorator.CountExtraChanceDecoratorConfig;
 import net.minecraft.world.gen.decorator.Decorator;
-import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.RandomPatchFeatureConfig;
+import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
 import net.minecraft.world.gen.placer.SimpleBlockPlacer;
 import net.minecraft.world.gen.stateprovider.SimpleStateProvider;
@@ -19,10 +17,12 @@ public class FeatureRegistry {
 
     public static Feature<BranchedTreeFeatureConfig> elder_tree;
     public static Feature<RandomPatchFeatureConfig> blueberry_bush;
+    public static Feature<RandomPatchFeatureConfig> lavender;
 
     public static void spawnFeatures() {
         addBlueberryBushes();
         addElderTrees();
+        addLavenderPatches();
     }
 
     public static void addElderTrees() {
@@ -38,7 +38,7 @@ public class FeatureRegistry {
                                 ).build()
                         ).createDecoratedFeature(
                                 Decorator.COUNT_EXTRA_HEIGHTMAP.configure(
-                                        new CountExtraChanceDecoratorConfig(0, 0.05F, 1)
+                                        new CountExtraChanceDecoratorConfig(0, 0.02F, 1)
                                 )
                         )
                 );
@@ -54,7 +54,7 @@ public class FeatureRegistry {
                                 .build()
                         ).createDecoratedFeature(
                                 Decorator.COUNT_EXTRA_HEIGHTMAP.configure(
-                                    new CountExtraChanceDecoratorConfig(0, 0.02F, 1)
+                                    new CountExtraChanceDecoratorConfig(0, 0.01F, 1)
                                 )
                         )
                 );
@@ -67,6 +67,25 @@ public class FeatureRegistry {
             if (shouldAddBlueberryBushes(biome))
                 biome.addFeature(GenerationStep.Feature.VEGETAL_DECORATION,
                         blueberry_bush.configure(
+                                new RandomPatchFeatureConfig.Builder(
+                                        new SimpleStateProvider(
+                                                BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)
+                                        ),
+                                        new SimpleBlockPlacer())
+                                        .build()
+                        ).createDecoratedFeature(
+                                Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(
+                                        new CountDecoratorConfig(1)
+                                )
+                        )
+                );
+    }
+
+    public static void addLavenderPatches() {
+        for (Biome biome : Registry.BIOME)
+            if (shouldAddLavendar(biome))
+                biome.addFeature(GenerationStep.Feature.VEGETAL_DECORATION,
+                        lavender.configure(
                                 new RandomPatchFeatureConfig.Builder(
                                         new SimpleStateProvider(
                                                 BlockRegistry.blueberry_bush.getDefaultState().with(BerryBushBlock.AGE, 3)
@@ -155,6 +174,13 @@ public class FeatureRegistry {
                 || biome == Biomes.GIANT_TREE_TAIGA_HILLS
                 || biome == Biomes.TAIGA_MOUNTAINS
                 || biome == Biomes.SNOWY_TAIGA_MOUNTAINS;
+    }
+
+    //TODO: biome tags, currently hardcoding vanilla biomes based on forge biome dict entries
+    private static boolean shouldAddLavendar(Biome biome) {
+//        return BiomeDictionary.getTypes(biome).contains(BiomeDictionary.Type.PLAINS)
+//                || BiomeDictionary.getTypes(biome).contains(BiomeDictionary.Type.FOREST);
+        return false;
     }
 
 }
