@@ -19,11 +19,13 @@ public class ElderTree extends SaplingGenerator {
     @Override
     @Nullable
     protected ConfiguredFeature<BranchedTreeFeatureConfig, ?> createTreeFeature(Random random) {
-        return Feature.NORMAL_TREE.configure(new BranchedTreeFeatureConfig.Builder(new SimpleStateProvider(BlockRegistry.elder_log.getDefaultState()),
+        return Feature.NORMAL_TREE.configure(new BranchedTreeFeatureConfig.Builder(
+                new SimpleStateProvider(BlockRegistry.elder_log.getDefaultState()),
                 new SimpleStateProvider(BlockRegistry.elder_leaves.getDefaultState()),
-                new BlobFoliagePlacer(2, 0))
+                new BlobFoliagePlacer(3, 3))
                 .baseHeight(5)
                 .noVines()
-                .build());
+                .build()
+        );
     }
 }

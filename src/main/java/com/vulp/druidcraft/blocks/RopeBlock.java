@@ -97,16 +97,12 @@ public class RopeBlock extends ConnectedPlantBlock implements Waterloggable, IKn
 
     @SuppressWarnings("unchecked")
     private <T extends Comparable<T>> BlockState cycleProperty(BlockState state, Property<T> propertyIn, ItemUsageContext context) {
-        T value = getAdjacentValue(propertyIn.getValues(), state.get(propertyIn));
+        T value = Util.next(propertyIn.getValues(), state.get(propertyIn));
         if (value != RopeConnectionType.NONE) {
             return calculateKnot(state.with(propertyIn, (T) RopeConnectionType.NONE));
         } else if (!state.get(KNOTTED) && context.getPlayer().isSneaking()) {
             return state.with(KNOTTED, true);
         } else return calculateState(state, context.getWorld(), context.getBlockPos());
-    }
-
-    private static <T> T getAdjacentValue(Iterable<T> p_195959_0_, @Nullable T p_195959_1_) {
-        return Util.next(p_195959_0_, p_195959_1_);
     }
 
     @Nullable
@@ -181,7 +177,7 @@ public class RopeBlock extends ConnectedPlantBlock implements Waterloggable, IKn
         return calculateState(getDefaultState(), context.getWorld(), context.getBlockPos()).with(WATERLOGGED, ifluidstate.getFluid() == Fluids.WATER);
     }
 
-    private BlockState calculateKnot (BlockState currentState) {
+    private BlockState calculateKnot(BlockState currentState) {
         int count = 0;
 
         for (Direction dir : Direction.values()) {
@@ -201,7 +197,7 @@ public class RopeBlock extends ConnectedPlantBlock implements Waterloggable, IKn
     public boolean tryFillWithFluid(IWorld worldIn, BlockPos pos, BlockState state, FluidState fluidState) {
         if (!state.get(WATERLOGGED) && fluidState.getFluid() == Fluids.WATER) {
             if (!worldIn.isClient()) {
-                worldIn.setBlockState(pos, state.with(WATERLOGGED, Boolean.valueOf(true)), 3);
+                worldIn.setBlockState(pos, state.with(WATERLOGGED, true), 3);
                 worldIn.getFluidTickScheduler().schedule(pos, Fluids.WATER, Fluids.WATER.getTickRate(worldIn));
             }
             return true;
@@ -213,7 +209,7 @@ public class RopeBlock extends ConnectedPlantBlock implements Waterloggable, IKn
     @Override
     public Fluid tryDrainFluid(IWorld worldIn, BlockPos pos, BlockState state) {
         if (state.get(WATERLOGGED)) {
-            worldIn.setBlockState(pos, state.with(WATERLOGGED, Boolean.valueOf(false)), 3);
+            worldIn.setBlockState(pos, state.with(WATERLOGGED, false), 3);
             return Fluids.WATER;
         } else {
             return Fluids.EMPTY;
