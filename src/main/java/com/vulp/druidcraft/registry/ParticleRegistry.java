@@ -7,11 +7,11 @@ import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.particle.DefaultParticleType;
 
 public class ParticleRegistry {
-    public static final DefaultParticleType magic_smoke = new CustomParticleType(false);
-    public static final DefaultParticleType fiery_glow = new CustomParticleType(false);
-    public static final DefaultParticleType fiery_spark = new CustomParticleType(false);
-    public static final DefaultParticleType magic_mist = new CustomParticleType(false);
-    public static final DefaultParticleType magic_glitter = new CustomParticleType(false);
+    public static final DefaultParticleType magic_smoke = new CustomParticleType(true);
+    public static final DefaultParticleType fiery_glow = new CustomParticleType(true);
+    public static final DefaultParticleType fiery_spark = new CustomParticleType(true);
+    public static final DefaultParticleType magic_mist = new CustomParticleType(true);
+    public static final DefaultParticleType magic_glitter = new CustomParticleType(true);
 
     @Environment(EnvType.CLIENT)
     public static void registerFactories() {

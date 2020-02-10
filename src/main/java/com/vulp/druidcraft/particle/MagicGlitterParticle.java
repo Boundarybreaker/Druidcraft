@@ -26,6 +26,12 @@ public class MagicGlitterParticle extends SpriteBillboardParticle {
     }
 
     @Override
+    public void move(double dx, double dy, double dz) {
+        this.setBoundingBox(this.getBoundingBox().offset(dx, dy, dz));
+        this.repositionFromBoundingBox();
+    }
+
+    @Override
     public float getSize(float tickDelta) {
         float f = ((float)this.age + tickDelta) / (float)this.maxAge;
         return this.scale * (1.0F - f * f * 0.5F);
@@ -64,7 +70,6 @@ public class MagicGlitterParticle extends SpriteBillboardParticle {
             j = 240;
         }
 
-
         return j | k << 16;
     }
 
@@ -79,6 +84,7 @@ public class MagicGlitterParticle extends SpriteBillboardParticle {
         @Override
         public Particle createParticle(DefaultParticleType typeIn, World world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             MagicGlitterParticle particle = new MagicGlitterParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
+            particle.setSprite(spriteSet);
             return particle;
         }
     }

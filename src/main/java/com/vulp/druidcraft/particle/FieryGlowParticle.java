@@ -79,7 +79,7 @@ public class FieryGlowParticle extends SpriteBillboardParticle {
             this.velocityX *= 0.9599999785423279D;
             this.velocityY *= 0.9599999785423279D;
             this.velocityZ *= 0.9599999785423279D;
-            if (this.age / this.maxAge <= 0.3 && fizzleTriggered == false) {
+            if (this.age / (float) this.maxAge <= 0.3 && !fizzleTriggered) {
                 fizzleTriggered = true;
                 this.setFizzleAge(this.age);
                 this.setFizzleScale(this.scale);

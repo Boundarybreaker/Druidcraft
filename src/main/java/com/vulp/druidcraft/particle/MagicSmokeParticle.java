@@ -28,7 +28,8 @@ public class MagicSmokeParticle extends SpriteBillboardParticle {
 
     @Override
     public ParticleTextureSheet getType() {
-        return ICustomParticleRender.PARTICLE_SHEET_TRANSLUCENT_GLOW;
+//        return ICustomParticleRender.PARTICLE_SHEET_TRANSLUCENT_GLOW;
+        return ParticleTextureSheet.PARTICLE_SHEET_LIT;
     }
 
     @Override
@@ -78,7 +79,6 @@ public class MagicSmokeParticle extends SpriteBillboardParticle {
         public Particle createParticle(DefaultParticleType typeIn, World world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             MagicSmokeParticle particle = new MagicSmokeParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
             return particle;
-
         }
     }
 }

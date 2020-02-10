@@ -1,8 +1,8 @@
 {
   "textures": [
-    "druidcraft:magic_mist_0",
-    "druidcraft:magic_mist_1",
-    "druidcraft:magic_mist_2",
-    "druidcraft:magic_mist_3"
+    "druidcraft:particle/magic_mist_0",
+    "druidcraft:particle/magic_mist_1",
+    "druidcraft:particle/magic_mist_2",
+    "druidcraft:particle/magic_mist_3"
   ]
 }

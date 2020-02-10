@@ -61,7 +61,6 @@ public class SoulfireBlock extends Block {
     @Environment(EnvType.CLIENT)
     @Override
     public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-        super.randomDisplayTick(state, world, pos, random);
         double d0 = (double) pos.getX() + 0.5D;
         double d1 = (double) pos.getY() + 0.5D;
         double d2 = (double) pos.getZ() + 0.5D;
@@ -71,7 +70,7 @@ public class SoulfireBlock extends Block {
             float offset1 = Math.min(limit, Math.max(-limit, random.nextFloat() - 0.5f));
             float offset2 = Math.min(limit, Math.max(-limit, random.nextFloat() - 0.5f));
             float offset3 = Math.min(limit, Math.max(-limit, random.nextFloat() - 0.5f));
-            world.addParticle(ParticleRegistry.magic_smoke, false, d0 + offset1, d1 + offset2, d2 + offset3, color[0] / 255.f, color[1] / 255.f, color[2] / 255.f);
+            world.addParticle(ParticleRegistry.magic_smoke, true, d0 + offset1, d1 + offset2, d2 + offset3, color[0] / 255.f, color[1] / 255.f, color[2] / 255.f);
         }
     }
 }
